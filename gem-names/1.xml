@@ -5,9 +5,9 @@
 <html>
 <head>
   <!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-98DP5VKS42"></script> // Rejtett
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-98DP5VKS42"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
+  window.dataLayer = window.dataLayer || []; // Rejtett
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
 
