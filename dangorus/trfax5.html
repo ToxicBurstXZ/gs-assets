@@ -1,58 +1,83 @@
-<body style="background:black; margin:0; overflow:hidden; color:white;">
-
-<center style="margin-top:20vh;">
-    <button class="fullscreen-button" onclick="openGame(GAME_1, 'Game 1')">Play Game 1</button>
-    <br><br>
-    <button class="fullscreen-button" onclick="openGame(GAME_2, 'Game 2')">Play Game 2</button>
-</center>
-
-<!-- Overlay -->
-<div id="overlay" class="overlay" style="display:none;">
-    <div class="game-modal" id="gameModal">
-
-        <!-- iframe wrapper -->
-        <div class="iframe-wrapper">
-            <iframe id="gameFrame"></iframe>
-        </div>
-
-        <!-- bottom bar -->
-        <div class="controls" id="controls">
-            <span class="game-title" id="gameTitle">Game</span>
-            <div class="control-buttons">
-                <button onclick="toggleFullscreen()">⛶</button>
-                <button onclick="closeGame()">✕</button>
-            </div>
-        </div>
-
-    </div>
-</div>
-
+<!DOCTYPE html>
+<html>
+<head>
 <style>
-.fullscreen-button {
-    width: 40%;
-    height: 10%;
-    background: #000;
+body {
+    background-color: #000;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* search-bar */
+#search-input {
+    background-color: #000;
     color: #fff;
+    padding: 15px 30px;
     border: 2px solid #fff;
-    border-radius: 10px;
-    font: 20px monospace;
+    border-radius: 20px;
+    font-size: 18px;
+    display: block;
+    margin: 20px auto;
+    max-width: 500px;
+    width: 90%;
+    outline: none;
+}
+
+/* game-layout-and-style */
+.game-container {
+    background-color: #000;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 25px;
+    max-width: 200px;
+    display: inline-block;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
 }
 
-/* Overlay */
+.game-container:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px white;
+}
+
+.game-image {
+    width: 100%;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.game-title {
+    color: #fff;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.no-results {
+    font-size: 30px;
+    font-family: monospace;
+    margin: 40px;
+}
+
+/* overlay */
 .overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.7);
-    z-index: 999;
-    display: flex;
-    justify-content: center;
+    display: none;
     align-items: center;
+    justify-content: center;
+    z-index: 999;
 }
 
-/* Modal */
 .game-modal {
-    width: 80vw;
+    width: 60vw;
     height: 80vh;
     background: black;
     border-radius: 12px;
@@ -61,13 +86,14 @@
     overflow: hidden;
 }
 
-/* iframe wrapper */
+/* iframe-wrapper */
 .iframe-wrapper {
     flex: 1;
     margin: 8px;
     border: 2px solid white;
     border-radius: 6px;
     overflow: hidden;
+    position: relative;
 }
 
 .iframe-wrapper iframe {
@@ -76,23 +102,47 @@
     border: none;
 }
 
-/* bottom bar */
-.controls {
+/* extra-styles */
+.loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* game-contorl-panel */
+.footer {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     padding: 8px 12px;
+    border: 2px solid white;
     border-top: 2px solid white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin: 0 8px 8px 8px;
 }
 
-/* game name */
-.game-title {
-    font: 16px monospace;
+.modal-game-title {
+    font-family: monospace;
+    font-size: 14px;
     opacity: 0.9;
+    flex: 1;
+    text-align: left;
 }
 
-/* buttons */
-.control-buttons {
+.controls {
     display: flex;
     gap: 8px;
 }
@@ -112,9 +162,7 @@
     color: black;
 }
 
-/* ===== FULLSCREEN MODE ===== */
-
-/* remove rounded corners & borders */
+/* fullscreen-mode */
 :fullscreen .game-modal {
     width: 100vw;
     height: 100vh;
@@ -127,23 +175,91 @@
     border-radius: 0;
 }
 
-/* hide bottom bar in fullscreen */
-:fullscreen .controls {
+:fullscreen .footer {
     display: none;
 }
 </style>
+</head>
+
+<body>
+
+<input type="text" id="search-input" placeholder="Search games...">
+<div id="game-container"></div>
+
+<!-- GAME OVERLAY -->
+<div class="overlay" id="overlay">
+    <div class="game-modal" id="gameModal">
+        <div class="iframe-wrapper">
+            <div class="loader" id="loader"></div>
+            <iframe id="gameFrame"></iframe>
+        </div>
+        <div class="footer">
+            <div class="modal-game-title" id="modalGameTitle"></div>
+            <div class="controls">
+                <button onclick="toggleFullscreen()">⛶</button>
+                <button onclick="closeGame()">✕</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
-const GAME_1 =
-  "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/b-stuff@2-123-321/mcX.html";
+const gamesData = [
+    {
+        name: "Minecraft",
+        file: "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/b-stuff@2-123-321/mcX.html",
+        img: "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/minecraft.png"
+    },
+    {
+        name: "Cluster Rush",
+        file: "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/gem-names/2.xml",
+        img: "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/cluster-truck.png"
+    }
+];
 
-const GAME_2 =
-  "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/gem-names/2.xml";
+// Sort alphabetically
+gamesData.sort((a, b) => a.name.localeCompare(b.name));
 
+function displayGames(games) {
+    const container = document.getElementById("game-container");
+    container.innerHTML = "";
+
+    if (!games.length) {
+        container.innerHTML = '<div class="no-results">No Games Found</div>';
+        return;
+    }
+
+    games.forEach(game => {
+        const div = document.createElement("div");
+        div.className = "game-container";
+        div.onclick = () => openGame(game.file, game.name);
+
+        div.innerHTML = `
+            <img src="${game.img}" class="game-image">
+            <div class="game-title">${game.name}</div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+displayGames(gamesData);
+
+document.getElementById("search-input").addEventListener("input", e => {
+    const term = e.target.value.toLowerCase();
+    displayGames(gamesData.filter(g => g.name.toLowerCase().includes(term)));
+});
+
+/* Game-loader */
 async function openGame(url, name) {
-    const overlay = document.getElementById("overlay");
     const iframe = document.getElementById("gameFrame");
-    const title = document.getElementById("gameTitle");
+    const title = document.getElementById("modalGameTitle");
+    const loader = document.getElementById("loader");
+    const overlay = document.getElementById("overlay");
+
+    title.textContent = name;
+    loader.style.display = "block";
+    overlay.style.display = "flex";
 
     const res = await fetch(url);
     let html = await res.text();
@@ -152,24 +268,29 @@ async function openGame(url, name) {
     html = html.replace(/<head>/i, `<head><base href="${base}">`);
 
     iframe.srcdoc = html;
-    title.textContent = name;
-    overlay.style.display = "flex";
+
+    iframe.onload = () => {
+        loader.style.display = "none";
+    };
 }
 
 function closeGame() {
-    if (document.fullscreenElement) {
-        document.exitFullscreen();
-    }
-    document.getElementById("gameFrame").srcdoc = "";
+    if (document.fullscreenElement) document.exitFullscreen();
+    const iframe = document.getElementById("gameFrame");
+    const loader = document.getElementById("loader");
+    
+    iframe.srcdoc = "";
+    iframe.onload = null;
+    loader.style.display = "none";
     document.getElementById("overlay").style.display = "none";
 }
 
 function toggleFullscreen() {
     const modal = document.getElementById("gameModal");
-    if (!document.fullscreenElement) {
-        modal.requestFullscreen();
-    } else {
-        document.exitFullscreen();
-    }
+    if (!document.fullscreenElement) modal.requestFullscreen();
+    else document.exitFullscreen();
 }
 </script>
+
+</body>
+</html>
