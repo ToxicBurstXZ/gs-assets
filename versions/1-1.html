@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>G@MES</title>
+<style>
+body {
+    background-color: #000;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: white;
+}
+
+/* search-bar */
+#search-input {
+    background-color: #000;
+    color: #fff;
+    padding: 15px 30px;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    font-size: 18px;
+    display: block;
+    margin: 20px auto;
+    max-width: 500px;
+    width: 90%;
+    outline: none;
+}
+
+/* game-layout-and-style */
+.game-container {
+    background-color: #000;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 25px;
+    max-width: 200px;
+    display: inline-block;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.game-container:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 10px white;
+}
+
+.game-image {
+    width: 100%;
+    height: 150px;
+    border-radius: 10px;
+    object-fit: cover;
+}
+
+.game-title {
+    color: #fff;
+    margin-top: 10px;
+    font-weight: bold;
+    font-size: 12px;
+    font-family: monospace;
+}
+
+.no-results {
+    font-size: 30px;
+    font-family: monospace;
+    margin: 40px;
+}
+
+/* overlay */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.game-modal {
+    width: 60vw;
+    height: 80vh;
+    background: black;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* iframe-wrapper */
+.iframe-wrapper {
+    flex: 1;
+    margin: 8px;
+    border: 2px solid white;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.iframe-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* extra-styles */
+.loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border: 6px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes spin {
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* game-contorl-panel */
+.footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border: 2px solid white;
+    border-top: 2px solid white;
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+    margin: 0 8px 8px 8px;
+}
+
+.modal-game-title {
+    font-family: monospace;
+    font-size: 14px;
+    opacity: 0.9;
+    flex: 1;
+    text-align: left;
+}
+
+.controls {
+    display: flex;
+    gap: 8px;
+}
+
+.controls button {
+    background: black;
+    color: white;
+    border: 2px solid white;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font: 16px monospace;
+    cursor: pointer;
+}
+
+.controls button:hover {
+    background: white;
+    color: black;
+}
+
+/* fullscreen-mode */
+:fullscreen .game-modal {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+}
+
+:fullscreen .iframe-wrapper {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+}
+
+:fullscreen .footer {
+    display: none;
+}
+/* extra */
+.title {
+    font-size: 40px;
+    color: #fff;
+    text-shadow:
+    0 0 2px #fff,
+    0 0 2px #fff;
+}
+.description {
+    color: #FF0000;
+    text-shadow:
+    0 0 2px #FF0000,
+    0 0 2px #FF0000,
+    0 0 2px #FF0000;
+}
+</style>
+</head>
+
+<body>
+    <h1 class="title">Game Section</h1>
+    <a class="description">This new UI and game deployment may not be stable. Please report any bugs or glitches that occur while playing.</a>
+    <br>
+    <br>
+    
+<input type="text" id="search-input" placeholder="Search games...">
+<div id="game-container"></div>
+
+<!-- game-holder -->
+<div class="overlay" id="overlay">
+    <div class="game-modal" id="gameModal">
+        <div class="iframe-wrapper">
+            <div class="loader" id="loader"></div>
+            <iframe id="gameFrame"></iframe>
+        </div>
+        <div class="footer">
+            <div class="modal-game-title" id="modalGameTitle"></div>
+            <div class="controls">
+                <button onclick="toggleFullscreen()">⛶</button>
+                <button onclick="closeGame()">✕</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const gamesData = [
+    {
+        "name": "2048",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/1.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/2048.png"
+    },
+    {
+        "name": "60 Second Burger Run",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/2.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/60-second-burger-run.png"
+    },
+    {
+        "name": "Agar.io SX",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files-bugged/1.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/agario-sx.png"
+    },
+    {
+        "name": "Binding of Isaac",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/4.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/bfi.jpg"
+    },
+    {
+        "name": "🛑Death Run 3D🛑",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/fixed-files/1.html",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/death-run-3d.png"
+    },
+    {
+        "name": "Minecraft",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/b-stuff@2-123-321/mcX.html",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/minecraft.png"
+    },
+    {
+        "name": "Cluster Rush",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/2.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/cluster-truck.png"
+    },
+    {
+        "name": "Doge Miner",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/4.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/doge-miner.png"
+    },
+    {
+        "name": "Learn to Fly",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/A-1.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/learn-how-to-fly.png"
+    },
+    {
+        "name": "🛑Slope🛑",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/fixed-files/5.html",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/slope.png"
+    },
+    {
+        "name": "Sonic Flash Ultimate",
+        "file": "https://github.com/ToxicBurstXZ/gs-assets/blob/main/ruffle-files/A-3.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/sonicfu.png"
+    },
+    {
+        "name": "Run 2",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/A-2.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/run.png"
+    },
+    {
+        "name": "🛑Run 3🛑",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/6.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/run-3.png"
+    },
+    {
+        "name": "Level Devil",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/5.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/level-devil.png"
+    },
+    {
+        "name": "Awesome Tanks 2",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/3.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/awesome-tanks-2.png"
+    },
+    {
+        "name": "Core Ball",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files-bugged/3.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/core-ball.png"
+    },
+    {
+        "name": "🛑Car Hex 2🛑",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/gem-names/f-2.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/CarHex2.png"
+    },
+    {
+        "name": "Dragonball Devolution",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/8.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/dbz-devolution.png"
+    },
+    {
+        "name": "Strikeforce Kitty",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/A-4.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/strikeforce-kitty.png"
+    },
+    {
+        "name": "BTD 3",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/5.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/bloons-tower-defense-3.png"
+    },
+    {
+        "name": "BTD 4",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/6.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/bloons-tower-defense-4.png"
+    },
+    {
+        "name": "BTD 5",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/7.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/bloons-tower-defense-5.png"
+    },
+    {
+        "name": "3 Slices 2",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/fixed-files/4.html",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/3-slices-2.png"
+    },
+    {
+        "name": "Gun Mayhem 2",
+        "file": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/ruffle-files/9.xml",
+        "img": "https://cdn.jsdelivr.net/gh/ToxicBurstXZ/img@main/gun-mayhem-2.png"
+    }
+];
+
+// Sort alphabetically
+gamesData.sort((a, b) => a.name.localeCompare(b.name));
+
+function displayGames(games) {
+    const container = document.getElementById("game-container");
+    container.innerHTML = "";
+
+    if (!games.length) {
+        container.innerHTML = '<div class="no-results">No Games Found</div>';
+        return;
+    }
+
+    games.forEach(game => {
+        const div = document.createElement("div");
+        div.className = "game-container";
+        div.onclick = () => openGame(game.file, game.name);
+
+        div.innerHTML = `
+            <img src="${game.img}" class="game-image">
+            <div class="game-title">${game.name}</div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+displayGames(gamesData);
+
+document.getElementById("search-input").addEventListener("input", e => {
+    const term = e.target.value.toLowerCase();
+    displayGames(gamesData.filter(g => g.name.toLowerCase().includes(term)));
+});
+
+/* Game-loader */
+async function openGame(url, name) {
+    const iframe = document.getElementById("gameFrame");
+    const title = document.getElementById("modalGameTitle");
+    const loader = document.getElementById("loader");
+    const overlay = document.getElementById("overlay");
+
+    title.textContent = name;
+    loader.style.display = "block";
+    overlay.style.display = "flex";
+
+    const res = await fetch(url);
+    let html = await res.text();
+
+    const base = url.substring(0, url.lastIndexOf("/") + 1);
+    html = html.replace(/<head>/i, `<head><base href="${base}">`);
+
+    iframe.srcdoc = html;
+
+    iframe.onload = () => {
+        loader.style.display = "none";
+    };
+}
+
+function closeGame() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    const iframe = document.getElementById("gameFrame");
+    const loader = document.getElementById("loader");
+    
+    iframe.srcdoc = "";
+    iframe.onload = null;
+    loader.style.display = "none";
+    document.getElementById("overlay").style.display = "none";
+}
+
+function toggleFullscreen() {
+    const modal = document.getElementById("gameModal");
+    if (!document.fullscreenElement) modal.requestFullscreen();
+    else document.exitFullscreen();
+}
+</script>
+
+</body>
+</html>
