@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Title Screen</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            position: relative;
+        }
+
+        /* Background stays persistent throughout */
+        .background-slideshow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .background-slideshow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 0%, transparent 10%, rgba(0, 0, 0, 1) 100%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+        }
+
+        .background-image.active {
+            opacity: 1;
+        }
+
+        /* Black overlay for transitions */
+        .black-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .black-overlay.active {
+            opacity: 1;
+        }
+
+        /* Title Screen */
+        .title-screen {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px 80px;
+            position: relative;
+            z-index: 2;
+            opacity: 1;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .title-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .game-title {
+            margin-bottom: 80px;
+            text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .game-title h1 {
+            font-size: 72px;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.8),
+                         0 0 40px rgba(0, 0, 0, 0.5),
+                         0 0 60px rgba(0, 0, 0, 0.9),
+                         0 10px 30px rgba(0, 0, 0, 0.8);
+            letter-spacing: 4px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px rgba(0, 0, 0, 0.8),
+                             0 0 40px rgba(0, 0, 0, 0.5),
+                             0 0 60px rgba(0, 0, 0, 0.9),
+                             0 10px 30px rgba(0, 0, 0, 0.8);
+            }
+            to {
+                text-shadow: 0 0 30px rgba(0, 0, 0, 1),
+                             0 0 60px rgba(0, 0, 0, 0.8),
+                             0 0 80px rgba(0, 0, 0, 1),
+                             0 15px 40px rgba(0, 0, 0, 0.9);
+            }
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+
+       .game-button {
+            width: auto;
+            margin: 22px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #fff;
+            background: #000;
+            border: 2px solid #000;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 30px 15px rgba(0, 0, 0, 1),
+                        0 0 50px 10px rgba(0, 0, 0, 1),
+                        0 0 35px 15px rgba(0, 0, 0, 1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .game-button:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .game-button:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .game-button:hover {
+            background: black;
+            border: 2px solid #000;
+            box-shadow: 0 0 40px 20px rgba(0, 0, 0, 1),
+                        0 0 60px 30px rgba(0, 0, 0, 0.8),
+                        0 0 80px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        .game-button:active {
+            transform: translateY(-1px);
+            box-shadow: 0 0 35px 18px rgba(0, 0, 0, 0.9),
+                        0 0 55px 28px rgba(0, 0, 0, 0.7),
+                        0 0 75px 38px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Game Container */
+        .game-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .game-container.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Persistent animated background -->
+    <div class="background-slideshow">
+        <div class="background-image" id="bg1"></div>
+        <div class="background-image" id="bg2"></div>
+    </div>
+
+    <!-- Black overlay for transitions -->
+    <div class="black-overlay" id="blackOverlay"></div>
+
+    <!-- Title Screen -->
+    <div class="title-screen" id="titleScreen">
+        <div class="game-title">
+            <h1>Spectrum</h1>
+        </div>
+
+        <div class="button-container">
+            <button class="game-button" onclick="startGame()">Start Game</button>
+            <button class="game-button" onclick="openOptions()">Options</button>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container" id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="800"></canvas>
+        <button class="game-button" id="resetButton" style="display: none; position: absolute; z-index: 10;" onclick="resetGame()">Reset?</button>
+    </div>
+
+    <script>
+        // ===== BACKGROUND ANIMATION =====
+        const backgrounds = [
+            document.getElementById('bg1'),
+            document.getElementById('bg2')
+        ];
+
+        function getRandomHexColor() {
+            const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+            return '#' + randomColor.padStart(6, '0');
+        }
+
+        let currentIndex = 0;
+
+        function fadeToNextColor() {
+            const current = backgrounds[currentIndex];
+            const next = backgrounds[(currentIndex + 1) % backgrounds.length];
+
+            next.style.backgroundColor = getRandomHexColor();
+            current.classList.remove('active');
+
+            setTimeout(() => {
+                currentIndex = (currentIndex + 1) % backgrounds.length;
+                next.classList.add('active');
+            }, 2000);
+        }
+
+        // Initialize background
+        backgrounds[0].style.backgroundColor = getRandomHexColor();
+        backgrounds[0].classList.add('active');
+        setInterval(fadeToNextColor, 10000);
+
+        // ===== TRANSITION SYSTEM =====
+        function startGame() {
+            const titleScreen = document.getElementById('titleScreen');
+            const blackOverlay = document.getElementById('blackOverlay');
+            const gameContainer = document.getElementById('gameContainer');
+
+            // Step 1: Fade menu out
+            titleScreen.classList.add('hidden');
+
+            // Step 2: After menu fades, show black overlay
+            setTimeout(() => {
+                blackOverlay.classList.add('active');
+            }, 1000);
+
+            // Step 3: After black overlay is solid, start fading to game
+            setTimeout(() => {
+                gameContainer.classList.add('visible');
+                blackOverlay.classList.remove('active');
+                initializeGame();
+            }, 2000);
+        }
+
+        function openOptions() {
+            console.log('Options clicked');
+            alert('Opening options...');
+        }
+
+        function resetGame() {
+            // Hide reset button
+            const resetBtn = document.getElementById('resetButton');
+            if (resetBtn) {
+                resetBtn.style.display = 'none';
+            }
+
+            // This will be filled in by the game initialization code
+            // We need to call a reset function that's defined inside initializeGame
+            if (window.resetGameState) {
+                window.resetGameState();
+            }
+        }
+
+        // ===== GAME CODE =====
+        let gameInitialized = false;
+
+        function initializeGame() {
+            if (gameInitialized) return;
+            gameInitialized = true;
+
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Function to generate random color
+            function getRandomColor() {
+                const r = Math.floor(Math.random() * 256);
+                const g = Math.floor(Math.random() * 256);
+                const b = Math.floor(Math.random() * 256);
+                return `rgb(${r}, ${g}, ${b})`;
+            }
+
+            // Player ball object
+            const player = {
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                radius: 20,
+                color: getRandomColor(),
+                originalX: canvas.width / 2,
+                originalY: canvas.height / 2,
+                isDashing: false,
+                dashProgress: 0,
+                dashSpeed: 0.15, // Higher = faster dash
+                dashTarget: null,
+                dashPhase: 'none' // 'none', 'toTarget', 'returning'
+            };
+
+            // Ghost trail for dash effect
+            const ghostTrail = [];
+
+            // Game balls (3 balls in triangle formation around player)
+            const gameBalls = [];
+            
+            // Arrow pointer state
+            const arrowPointer = {
+                selectedIndex: 0,
+                currentAngle: -Math.PI / 2,
+                targetAngle: -Math.PI / 2,
+                transitionSpeed: 0.2,
+                distance: 50,
+                size: 20
+            };
+
+            // Game state
+            const gameState = {
+                phase: 'tutorial',
+                Level: 1,
+                lastTimerUpdate: 0,
+                gameOpacity: 0,
+                fadeSpeed: 0.02,
+                bonusLives: 5, // 5 bonus lives, lose one for each wrong ball
+                shakeIntensity: 0,
+                shakeTimer: 0,
+                isShaking: false,
+                isShattered: false,
+                shatterPieces: [],
+                ballCount: 3, // Number of balls (increases every 10 Levels)
+                showingMilestone: false,
+                milestoneStartTime: 0,
+                milestoneDuration: 5000, // 5 seconds in milliseconds
+                gameOverFadeOpacity: 1, // For fading out game elements on death
+                shatterComplete: false
+            };
+
+            // Initialize game balls for a Level
+            function initializeGameBalls() {
+                gameBalls.length = 0;
+                
+                const ballCount = gameState.ballCount;
+                const distance = 250;
+                const positions = [];
+                
+                // Generate evenly spaced positions around player in a circle
+                for (let i = 0; i < ballCount; i++) {
+                    const angle = (Math.PI * 2 / ballCount) * i - Math.PI / 2; // Start from top
+                    positions.push({ angle: angle });
+                }
+                
+                const correctBallIndex = Math.floor(Math.random() * ballCount);
+                
+                for (let i = 0; i < ballCount; i++) {
+                    let ballColor;
+                    
+                    if (i === correctBallIndex) {
+                        ballColor = player.color;
+                    } else {
+                        do {
+                            ballColor = getRandomColor();
+                        } while (ballColor === player.color);
+                    }
+                    
+                    gameBalls.push({
+                        x: player.originalX + Math.cos(positions[i].angle) * distance,
+                        y: player.originalY + Math.sin(positions[i].angle) * distance,
+                        radius: 20,
+                        color: ballColor,
+                        isCorrect: i === correctBallIndex,
+                        visible: true
+                    });
+                }
+                
+                arrowPointer.selectedIndex = 0;
+                
+                const firstBall = gameBalls[0];
+                const dx = firstBall.x - player.originalX;
+                const dy = firstBall.y - player.originalY;
+                arrowPointer.currentAngle = Math.atan2(dy, dx);
+                arrowPointer.targetAngle = arrowPointer.currentAngle;
+            }
+
+            // Tutorial state
+            const tutorial = {
+                active: false,
+                currentLine: 0,
+                lines: [
+                    "Hello Player!",
+                    "Welcome to [Game Name]",
+                    "If you're playing this, you were interested in my MYP project!",
+                    "So, Shall we begin?"
+                ],
+                opacity: 0,
+                fadingIn: false,
+                fadingOut: false,
+                fadeSpeed: 0.02,
+                showContinuePrompt: false,
+                lastInteractionTime: 0
+            };
+
+            // Draw the player ball
+            function drawPlayer() {
+                if (gameState.isShattered) {
+                    // Don't draw player if shattered
+                    return;
+                }
+                
+                ctx.save();
+                
+                // Apply shake effect
+                if (gameState.isShaking) {
+                    const shakeX = (Math.random() - 0.5) * gameState.shakeIntensity;
+                    const shakeY = (Math.random() - 0.5) * gameState.shakeIntensity;
+                    ctx.translate(shakeX, shakeY);
+                }
+                
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+
+            // Start quick shake for wrong selection
+            function startWrongShake() {
+                gameState.isShaking = true;
+                gameState.shakeIntensity = 5; // Smaller shake than fail
+                gameState.shakeTimer = 15; // Quick shake (15 frames)
+            }
+
+            // Initialize shatter pieces
+            function initializeShatter() {
+                gameState.shatterPieces = [];
+                
+                for (let i = 0; i < 10; i++) {
+                    const angle = (Math.PI * 2 / 10) * i;
+                    const speed = 3 + Math.random() * 4;
+                    
+                    gameState.shatterPieces.push({
+                        x: player.x,
+                        y: player.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: player.radius / 3,
+                        rotation: Math.random() * Math.PI * 2,
+                        rotationSpeed: (Math.random() - 0.5) * 0.3,
+                        alpha: 1
+                    });
+                }
+            }
+
+            // Update shatter animation
+            function updateShatter() {
+                gameState.shatterPieces.forEach(piece => {
+                    piece.x += piece.vx;
+                    piece.y += piece.vy;
+                    piece.rotation += piece.rotationSpeed;
+                    piece.alpha -= 0.02; // Fade out
+                    piece.vy += 0.2; // Gravity
+                });
+            }
+
+            // Draw shatter pieces
+            function drawShatterPieces() {
+                gameState.shatterPieces.forEach(piece => {
+                    if (piece.alpha > 0) {
+                        ctx.save();
+                        ctx.globalAlpha = piece.alpha;
+                        ctx.translate(piece.x, piece.y);
+                        ctx.rotate(piece.rotation);
+                        
+                        ctx.fillStyle = player.color;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, piece.size, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.restore();
+                    }
+                });
+            }
+
+            // Start fail animation
+            function startFailAnimation() {
+                if (gameState.isShaking || gameState.isShattered) return;
+                
+                // Start shaking
+                gameState.isShaking = true;
+                gameState.shakeIntensity = 10;
+                gameState.shakeTimer = 90; // Shake for 90 frames (increased from 30)
+                
+                // Stop player from moving
+                player.isDashing = false;
+                player.dashPhase = 'none';
+            }
+
+            // Advance to next Level
+            function advanceLevel() {
+                // Check if we just completed a milestone Level (10, 20, 30, etc.)
+                const completedMilestone = (gameState.Level % 10 === 0);
+                
+                if (completedMilestone) {
+                    // Add one more ball for the next 10 Levels
+                    gameState.ballCount++;
+                }
+                
+                gameState.Level++;
+                
+                // Check if we reached a milestone (every 10 Levels up to 100)
+                if (gameState.Level % 10 === 0 && gameState.Level <= 100) {
+                    gameState.showingMilestone = true;
+                    gameState.milestoneStartTime = Date.now();
+                    // Don't reset or regenerate yet - wait until milestone display is done
+                    return;
+                }
+                
+                // Check if game is complete (reached Level 101)
+                if (gameState.Level > 100) {
+                    gameState.phase = 'gameComplete';
+                    return;
+                }
+                
+                // Reset timer (will be 10 seconds at start of new milestone cycle)
+                gameState.lastTimerUpdate = Date.now();
+                
+                // Generate new player color
+                player.color = getRandomColor();
+                
+                // Regenerate balls with new colors
+                initializeGameBalls();
+            }
+
+            // Get timer duration for current Level
+            function getTimerDuration() {
+                // Calculate which "cycle" of 10 Levels we're in
+                const LevelsInCurrentCycle = ((gameState.Level - 1) % 10) + 1;
+                
+                // Timer resets to 10 at Levels 1, 11, 21, 31, etc.
+                // Then decreases by 0.5 seconds per Level within that cycle
+                // Level 1/11/21: 10s, Level 2/12/22: 9.5s, ..., Level 10/20/30: 5.5s
+                return Math.max(1, 10.5 - (LevelsInCurrentCycle * 0.5));
+            }
+
+            // Continue game after milestone
+            function continueAfterMilestone() {
+                gameState.showingMilestone = false;
+                
+                // Reset timer
+                gameState.lastTimerUpdate = Date.now();
+                
+                // Generate new player color
+                player.color = getRandomColor();
+                
+                // Regenerate balls with new colors
+                initializeGameBalls();
+            }
+
+            // Draw ghost trail
+            function drawGhostTrail() {
+                ghostTrail.forEach((ghost, index) => {
+                    const opacity = ghost.opacity * (1 - index / ghostTrail.length);
+                    ctx.globalAlpha = opacity;
+                    ctx.fillStyle = player.color;
+                    ctx.beginPath();
+                    ctx.arc(ghost.x, ghost.y, player.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                });
+            }
+
+            // Update dash animation
+            function updateDash() {
+                if (!player.isDashing) return;
+
+                // Add ghost trail
+                if (ghostTrail.length === 0 || 
+                    (Math.abs(ghostTrail[0].x - player.x) > 5 || Math.abs(ghostTrail[0].y - player.y) > 5)) {
+                    ghostTrail.unshift({
+                        x: player.x,
+                        y: player.y,
+                        opacity: 0.6
+                    });
+                    
+                    // Keep trail length limited
+                    if (ghostTrail.length > 8) {
+                        ghostTrail.pop();
+                    }
+                }
+
+                // Fade out ghost trail
+                ghostTrail.forEach(ghost => {
+                    ghost.opacity *= 0.92;
+                });
+
+                // Remove very faint ghosts
+                while (ghostTrail.length > 0 && ghostTrail[ghostTrail.length - 1].opacity < 0.05) {
+                    ghostTrail.pop();
+                }
+
+                player.dashProgress += player.dashSpeed;
+
+                if (player.dashPhase === 'toTarget') {
+                    // Dash to target
+                    const t = Math.min(player.dashProgress, 1);
+                    player.x = player.originalX + (player.dashTarget.x - player.originalX) * t;
+                    player.y = player.originalY + (player.dashTarget.y - player.originalY) * t;
+
+                    if (player.dashProgress >= 1) {
+                        // Reached target - make ball disappear
+                        player.dashTarget.ball.visible = false;
+                        // Start returning
+                        player.dashPhase = 'returning';
+                        player.dashProgress = 0;
+                    }
+                } else if (player.dashPhase === 'returning') {
+                    // Dash back to original position
+                    const t = Math.min(player.dashProgress, 1);
+                    player.x = player.dashTarget.x + (player.originalX - player.dashTarget.x) * t;
+                    player.y = player.dashTarget.y + (player.originalY - player.dashTarget.y) * t;
+
+                    if (player.dashProgress >= 1) {
+                        // Finished dashing
+                        player.x = player.originalX;
+                        player.y = player.originalY;
+                        player.isDashing = false;
+                        player.dashPhase = 'none';
+                        player.dashProgress = 0;
+                        player.dashTarget = null;
+                        ghostTrail.length = 0; // Clear trail
+                        
+                        // Move to next Level
+                        advanceLevel();
+                    }
+                }
+            }
+
+            // Start dash to selected ball
+            function startDash(targetBall) {
+                if (player.isDashing) return; // Already dashing
+
+                player.isDashing = true;
+                player.dashPhase = 'toTarget';
+                player.dashProgress = 0;
+                player.originalX = player.x;
+                player.originalY = player.y;
+                player.dashTarget = {
+                    x: targetBall.x,
+                    y: targetBall.y,
+                    ball: targetBall
+                };
+                ghostTrail.length = 0; // Clear any existing trail
+            }
+
+            // Draw game balls
+            function drawGameBalls() {
+                gameBalls.forEach(ball => {
+                    if (ball.visible) {
+                        ctx.fillStyle = ball.color;
+                        ctx.beginPath();
+                        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                });
+            }
+
+            // Draw arrow pointer
+            function drawArrowPointer() {
+                if (gameBalls.length === 0) return;
+                
+                // Don't draw arrow during fail animation
+                if (gameState.isShaking || gameState.isShattered) return;
+                
+                const selectedBall = gameBalls[arrowPointer.selectedIndex];
+                if (!selectedBall.visible) return;
+                
+                const dx = selectedBall.x - player.originalX;
+                const dy = selectedBall.y - player.originalY;
+                arrowPointer.targetAngle = Math.atan2(dy, dx);
+                
+                let angleDiff = arrowPointer.targetAngle - arrowPointer.currentAngle;
+                
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                arrowPointer.currentAngle += angleDiff * arrowPointer.transitionSpeed;
+                
+                const arrowX = player.originalX + Math.cos(arrowPointer.currentAngle) * arrowPointer.distance;
+                const arrowY = player.originalY + Math.sin(arrowPointer.currentAngle) * arrowPointer.distance;
+                
+                ctx.save();
+                ctx.translate(arrowX, arrowY);
+                ctx.rotate(arrowPointer.currentAngle);
+                
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.moveTo(arrowPointer.size, 0);
+                ctx.lineTo(-arrowPointer.size / 2, -arrowPointer.size / 2);
+                ctx.lineTo(-arrowPointer.size / 2, arrowPointer.size / 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+
+            // Draw tutorial text
+            function drawTutorial() {
+                if (tutorial.active) {
+                    if (tutorial.fadingIn) {
+                        tutorial.opacity += tutorial.fadeSpeed;
+                        if (tutorial.opacity >= 1) {
+                            tutorial.opacity = 1;
+                            tutorial.fadingIn = false;
+                            tutorial.lastInteractionTime = Date.now();
+                        }
+                    }
+                    
+                    if (tutorial.fadingOut) {
+                        tutorial.opacity -= tutorial.fadeSpeed;
+                        if (tutorial.opacity <= 0) {
+                            tutorial.opacity = 0;
+                            tutorial.fadingOut = false;
+                            tutorial.currentLine++;
+                            if (tutorial.currentLine < tutorial.lines.length) {
+                                tutorial.fadingIn = true;
+                                tutorial.showContinuePrompt = false;
+                            } else {
+                                tutorial.active = false;
+                                gameState.phase = 'crossfade';
+                                gameState.lastTimerUpdate = Date.now();
+                            }
+                        }
+                    }
+                    
+                    if (!tutorial.fadingIn && !tutorial.fadingOut && tutorial.opacity === 1) {
+                        const timeSinceInteraction = Date.now() - tutorial.lastInteractionTime;
+                        if (timeSinceInteraction > 10000) {
+                            tutorial.showContinuePrompt = true;
+                        }
+                    }
+                    
+                    ctx.font = '24px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+                    
+                    const textX = player.originalX;
+                    const textY = player.originalY + player.radius + 20;
+                    
+                    ctx.globalAlpha = tutorial.opacity;
+                    
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText(tutorial.lines[tutorial.currentLine], textX, textY);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.fillText(tutorial.lines[tutorial.currentLine], textX, textY);
+                    
+                    if (tutorial.showContinuePrompt && tutorial.opacity === 1) {
+                        ctx.font = '14px Arial';
+                        const promptY = textY + 35;
+                        
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = 2;
+                        ctx.strokeText("(Press any button to continue)", textX, promptY);
+                        
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                        ctx.fillText("(Press any button to continue)", textX, promptY);
+                    }
+                    
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            // Handle crossfade from tutorial to game
+            function handleCrossfade() {
+                if (gameBalls.length === 0) {
+                    initializeGameBalls();
+                }
+                
+                gameState.gameOpacity += gameState.fadeSpeed;
+                if (gameState.gameOpacity >= 1) {
+                    gameState.gameOpacity = 1;
+                    gameState.phase = 'playing';
+                }
+                
+                ctx.globalAlpha = gameState.gameOpacity;
+                drawPlayer();
+                drawGameBalls();
+                drawArrowPointer();
+                drawLevelNumber();
+                updateAndDrawTimerBar();
+                drawBonusLives();
+                ctx.globalAlpha = 1;
+            }
+
+            // Draw Level number
+            function drawLevelNumber() {
+                ctx.font = 'bold 36px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'top';
+                
+                const text = `Level ${gameState.Level}`;
+                
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 4;
+                ctx.strokeText(text, canvas.width / 2, 5);
+                
+                ctx.fillStyle = 'white';
+                ctx.fillText(text, canvas.width / 2, 5);
+            }
+
+            // Helper function to draw rounded rectangle
+            function drawRoundedRect(x, y, width, height, radius) {
+                ctx.beginPath();
+                ctx.moveTo(x + radius, y);
+                ctx.lineTo(x + width - radius, y);
+                ctx.arc(x + width - radius, y + radius, radius, -Math.PI / 2, 0);
+                ctx.lineTo(x + width, y + height - radius);
+                ctx.arc(x + width - radius, y + height - radius, radius, 0, Math.PI / 2);
+                ctx.lineTo(x + radius, y + height);
+                ctx.arc(x + radius, y + height - radius, radius, Math.PI / 2, Math.PI);
+                ctx.lineTo(x, y + radius);
+                ctx.arc(x + radius, y + radius, radius, Math.PI, -Math.PI / 2);
+                ctx.closePath();
+            }
+
+            // Update and draw timer bar
+            function updateAndDrawTimerBar() {
+                const currentTime = Date.now();
+                const elapsedTime = (currentTime - gameState.lastTimerUpdate) / 1000;
+                
+                // Use Level-based duration
+                const timerDuration = getTimerDuration();
+                const timerPercentage = Math.max(0, 1 - (elapsedTime / timerDuration));
+                
+                if (timerPercentage <= 0 && !gameState.isShaking && !gameState.isShattered) {
+                    // Timer ran out - trigger fail animation
+                    startFailAnimation();
+                }
+                
+                const barWidth = 400;
+                const barHeight = 25;
+                const barX = (canvas.width - barWidth) / 2;
+                const barY = 45;
+                const cornerRadius = 12;
+                
+                ctx.fillStyle = 'rgba(50, 50, 50, 0.8)';
+                drawRoundedRect(barX, barY, barWidth, barHeight, cornerRadius);
+                ctx.fill();
+                
+                if (timerPercentage > 0) {
+                    const fillWidth = barWidth * timerPercentage;
+                    ctx.fillStyle = 'white';
+                    
+                    ctx.save();
+                    drawRoundedRect(barX, barY, barWidth, barHeight, cornerRadius);
+                    ctx.clip();
+                    ctx.fillRect(barX, barY, fillWidth, barHeight);
+                    ctx.restore();
+                }
+                
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                drawRoundedRect(barX, barY, barWidth, barHeight, cornerRadius);
+                ctx.stroke();
+            }
+
+            // Draw bonus lives circles
+            function drawBonusLives() {
+                const circleRadius = 8;
+                const circleSpacing = 25;
+                const startX = canvas.width / 2 - (circleSpacing * 2); // Center 5 circles
+                const startY = 85; // Below the timer bar
+                
+                for (let i = 0; i < 5; i++) {
+                    const x = startX + i * circleSpacing;
+                    const y = startY;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, circleRadius, 0, Math.PI * 2);
+                    
+                    if (i < gameState.bonusLives) {
+                        // Filled circle (still have this life)
+                        ctx.fillStyle = 'white';
+                        ctx.fill();
+                    } else {
+                        // Empty circle (lost this life)
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            // Main game loop
+            function gameLoop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                if (gameState.phase === 'tutorial') {
+                    drawPlayer();
+                    drawTutorial();
+                } else if (gameState.phase === 'crossfade') {
+                    handleCrossfade();
+                } else if (gameState.phase === 'gameComplete') {
+                    // Game complete screen
+                    drawPlayer();
+                    
+                    // Draw "Game Complete!" text
+                    ctx.font = 'bold 48px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 5;
+                    ctx.strokeText('Game Complete!', canvas.width / 2, canvas.height / 2 - 50);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('Game Complete!', canvas.width / 2, canvas.height / 2 - 50);
+                    
+                    // Draw completion message
+                    ctx.font = '24px Arial';
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.strokeText('You completed all 100 Levels!', canvas.width / 2, canvas.height / 2 + 20);
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.fillText('You completed all 100 Levels!', canvas.width / 2, canvas.height / 2 + 20);
+                } else if (gameState.phase === 'gameOver') {
+                    // Game over - show reset button
+                    const resetBtn = document.getElementById('resetButton');
+                    if (resetBtn) {
+                        resetBtn.style.display = 'block';
+                    }
+                } else if (gameState.phase === 'playing') {
+                    // Hide reset button during gameplay
+                    const resetBtn = document.getElementById('resetButton');
+                    if (resetBtn) {
+                        resetBtn.style.display = 'none';
+                    }
+                    
+                    // Check if showing milestone
+                    if (gameState.showingMilestone) {
+                        // Check if 5 seconds have passed
+                        const elapsedTime = Date.now() - gameState.milestoneStartTime;
+                        if (elapsedTime >= gameState.milestoneDuration) {
+                            continueAfterMilestone();
+                        }
+                        
+                        // Draw player
+                        drawPlayer();
+                        
+                        // Calculate fade opacity for milestone text
+                        const fadeInDuration = 500; // 0.5 seconds to fade in
+                        const fadeOutDuration = 500; // 0.5 seconds to fade out
+                        let textOpacity = 1;
+                        
+                        if (elapsedTime < fadeInDuration) {
+                            // Fading in
+                            textOpacity = elapsedTime / fadeInDuration;
+                        } else if (elapsedTime > gameState.milestoneDuration - fadeOutDuration) {
+                            // Fading out
+                            const timeLeft = gameState.milestoneDuration - elapsedTime;
+                            textOpacity = timeLeft / fadeOutDuration;
+                        }
+                        
+                        // Draw milestone text with fade
+                        ctx.globalAlpha = textOpacity;
+                        
+                        ctx.font = 'bold 48px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        
+                        const milestoneText = `Level ${gameState.Level} Text`;
+                        
+                        ctx.strokeStyle = 'black';
+                        ctx.lineWidth = 5;
+                        ctx.strokeText(milestoneText, canvas.width / 2, canvas.height / 2);
+                        
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(milestoneText, canvas.width / 2, canvas.height / 2);
+                        
+                        ctx.globalAlpha = 1; // Reset opacity
+                    } else {
+                        // Normal gameplay
+                        // Handle shake animation
+                        if (gameState.isShaking) {
+                            gameState.shakeTimer--;
+                            if (gameState.shakeTimer <= 0) {
+                                // Check if this is a death shake (high intensity) or wrong selection shake (low intensity)
+                                if (gameState.shakeIntensity >= 10) {
+                                    // Death shake - start shatter
+                                    gameState.isShaking = false;
+                                    gameState.isShattered = true;
+                                    initializeShatter();
+                                } else {
+                                    // Quick shake done - just stop shaking
+                                    gameState.isShaking = false;
+                                }
+                            }
+                        }
+                        
+                        // Handle shatter animation
+                        if (gameState.isShattered && !gameState.shatterComplete) {
+                            updateShatter();
+                            
+                            // Check if all pieces have faded out
+                            const allFaded = gameState.shatterPieces.every(piece => piece.alpha <= 0);
+                            if (allFaded) {
+                                gameState.shatterComplete = true;
+                            }
+                        }
+                        
+                        // Fade out game elements after shatter completes
+                        if (gameState.shatterComplete) {
+                            gameState.gameOverFadeOpacity -= 0.02;
+                            if (gameState.gameOverFadeOpacity <= 0) {
+                                gameState.gameOverFadeOpacity = 0;
+                                gameState.phase = 'gameOver';
+                            }
+                        }
+                        
+                        // Update dash animation (only if not failing)
+                        if (!gameState.isShaking && !gameState.isShattered) {
+                            updateDash();
+                        }
+                        
+                        // Draw everything
+                        ctx.globalAlpha = gameState.gameOverFadeOpacity;
+                        
+                        drawGhostTrail();
+                        
+                        // Draw shatter pieces if shattered, otherwise draw player
+                        if (gameState.isShattered) {
+                            drawShatterPieces();
+                        } else {
+                            drawPlayer();
+                        }
+                        
+                        drawGameBalls();
+                        drawArrowPointer();
+                        drawLevelNumber();
+                        updateAndDrawTimerBar();
+                        drawBonusLives();
+                        
+                        ctx.globalAlpha = 1; // Reset opacity
+                    }
+                }
+                
+                requestAnimationFrame(gameLoop);
+            }
+
+            // Start the game loop
+            gameLoop();
+
+            // Handle keyboard input
+            let tutorialStarted = false;
+            document.addEventListener('keydown', function(e) {
+                if (gameState.phase === 'tutorial' && !tutorialStarted) {
+                    tutorial.active = true;
+                    tutorial.fadingIn = true;
+                    tutorial.currentLine = 0;
+                    tutorial.opacity = 0;
+                    tutorialStarted = true;
+                } else if (tutorial.active && !tutorial.fadingIn && !tutorial.fadingOut && tutorial.opacity === 1) {
+                    tutorial.fadingOut = true;
+                    tutorial.showContinuePrompt = false;
+                }
+                
+                if (gameState.phase === 'playing') {
+                    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                        if (!gameState.isShaking && !gameState.isShattered && !gameState.showingMilestone) {
+                            e.preventDefault();
+                            do {
+                                arrowPointer.selectedIndex = (arrowPointer.selectedIndex - 1 + gameBalls.length) % gameBalls.length;
+                            } while (!gameBalls[arrowPointer.selectedIndex].visible && gameBalls.some(b => b.visible));
+                        }
+                    } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                        if (!gameState.isShaking && !gameState.isShattered && !gameState.showingMilestone) {
+                            e.preventDefault();
+                            do {
+                                arrowPointer.selectedIndex = (arrowPointer.selectedIndex + 1) % gameBalls.length;
+                            } while (!gameBalls[arrowPointer.selectedIndex].visible && gameBalls.some(b => b.visible));
+                        }
+                    } else if (e.key === ' ' || e.key === 'Spacebar') {
+                        e.preventDefault();
+                        const selectedBall = gameBalls[arrowPointer.selectedIndex];
+                        if (selectedBall.visible && !player.isDashing && !gameState.isShaking && !gameState.isShattered && !gameState.showingMilestone) {
+                            if (selectedBall.isCorrect) {
+                                // Start dash to correct ball
+                                startDash(selectedBall);
+                            } else {
+                                // Wrong ball - lose a bonus life
+                                if (gameState.bonusLives > 0) {
+                                    gameState.bonusLives--;
+                                    
+                                    // Check if all lives lost
+                                    if (gameState.bonusLives === 0) {
+                                        // No lives left - trigger death animation
+                                        startFailAnimation();
+                                    } else {
+                                        // Still have lives - just shake
+                                        startWrongShake();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Reset function accessible from outside
+            window.resetGameState = function() {
+                // Reset game state
+                gameState.phase = 'playing';
+                gameState.Level = 1;
+                gameState.bonusLives = 5;
+                gameState.isShaking = false;
+                gameState.isShattered = false;
+                gameState.shatterPieces = [];
+                gameState.shatterComplete = false;
+                gameState.gameOverFadeOpacity = 1;
+                gameState.showingMilestone = false;
+                gameState.lastTimerUpdate = Date.now();
+
+                // Reset player
+                player.x = canvas.width / 2;
+                player.y = canvas.height / 2;
+                player.originalX = canvas.width / 2;
+                player.originalY = canvas.height / 2;
+                player.color = getRandomColor();
+                player.isDashing = false;
+                player.dashPhase = 'none';
+                player.dashProgress = 0;
+                player.dashTarget = null;
+
+                // Clear ghost trail
+                ghostTrail.length = 0;
+
+                // Regenerate balls
+                initializeGameBalls();
+            };
+        }
+    </script>
+</body>
+</html>
