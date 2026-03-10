@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <style>
+        body {
+            background-color: #000000;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .button {
+            background-color: #006400;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            text-decoration: none;
+            display: block;
+            margin: 20px auto;
+            cursor: pointer;
+            max-width: fit-content;
+        }
+
+        .button:hover {
+            background-color: #004500;
+        }
+
+        .button-container {
+            margin: 20px 0;
+        }
+
+        ::placeholder {
+            color: white;
+            opacity: 80%;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #000000;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 25px;
+            max-width: 200px;
+            display: inline-block;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .game-container:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 1);
+            cursor: pointer;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 150px;
+            border-radius: 10px 10px 10px 10px;
+            object-fit: cover;
+        }
+
+        .game-title {
+            text-align: center;
+            color: #fff;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .games-list-container {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        #search-input {
+            background-color: #000;
+            color: #fff;
+            padding: 15px 30px;
+            border-color: #fff;
+            border-width: 2px;
+            border-radius: 20px;
+            font-size: 18px;
+            display: block;
+            margin: 20px auto;
+            max-width: 500px;
+            width: 90%;
+            outline: none;
+        }
+
+        .no-results {
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="text" id="search-input" placeholder="Search games...">
+    <div id="game-container"></div>
+
+    <script>
+        // ─── Cache Configuration ──────────────────────────────────────────────────────
+        const DB_NAME = 'GameCacheDB';
+        const STORE_NAME = 'GameFiles';
+        const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME))
+                        db.createObjectStore(STORE_NAME, {
+                            keyPath: 'url'
+                        });
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveToCache(url, content) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const store = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME);
+                const req = store.put({
+                    url,
+                    content,
+                    timestamp: Date.now()
+                });
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(new Error('Cache error'));
+            });
+        }
+
+        async function getFileFromCache(url) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const store = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME);
+                store.get(url).onsuccess = async (e) => {
+                    const data = e.target.result;
+                    if (data && (Date.now() - data.timestamp) < CACHE_DURATION) {
+                        resolve(data.content);
+                    } else {
+                        try {
+                            const text = await fetch(url).then(r => r.text());
+                            await saveToCache(url, text);
+                            resolve(text);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    }
+                };
+                store.get(url).onerror = () => reject(new Error('DB error'));
+            });
+        }
+
+        function openGame(fileUrl, gameName) {
+            getFileFromCache(fileUrl).then((text) => {
+                const w = window.open('', '_blank');
+                if (w) {
+                    w.document.open();
+                    w.document.write(text);
+                    w.document.close();
+                } else {
+                    alert('Failed to open ' + gameName + '. Please allow popups.');
+                }
+            }).catch(() => alert('Failed to load ' + gameName + '.'));
+        }
+
+        // ─── Game Data ────────────────────────────────────────────────────────────────
+        const gamesData = [{
+                name: "2048",
+                file: "gs-assets/game-files/2048.html",
+                img: "img/game-icons/2048.png"
+            },
+            {
+                name: "3 Slices 2",
+                file: "gs-assets/game-files/3-slices-2.html",
+                img: "img/game-icons/3-slices-2.png"
+            },
+            {
+                name: "60 Seconds Burger Run",
+                file: "gs-assets/game-files/60-seconds-burger-run.html",
+                img: "img/game-icons/60-second-burger-run.png"
+            },
+            {
+                name: "Achilles",
+                file: "gs-assets/game-files/achilles.html",
+                img: "img/game-icons/achilles.png"
+            },
+            {
+                name: "Agar.io SX",
+                file: "gs-assets/game-files/agario.html",
+                img: "img/game-icons/agario-sx.png"
+            },
+            {
+                name: "Awesome Tanks 2",
+                file: "gs-assets/game-files/awesome-tank-2.html",
+                img: "img/game-icons/awesome-tanks-2.png"
+            },
+            {
+                name: "Bad Ice Cream",
+                file: "gs-assets/game-files/bad-ice-cream.html",
+                img: "img/game-icons/bad-ice-cream.png"
+            },
+            {
+                name: "Bad Ice Cream 2",
+                file: "gs-assets/game-files/bad-ice-cream-2.html",
+                img: "img/game-icons/bad-ice-cream-2.png"
+            },
+            {
+                name: "Bad Ice Cream 3",
+                file: "gs-assets/game-files/bad-ice-cream-3.html",
+                img: "img/game-icons/bad-ice-cream-3.png"
+            },
+            {
+                name: "Binding of Isaac",
+                file: "gs-assets/game-files/binding-of-isaac.html",
+                img: "img/game-icons/bfi.jpg"
+            },
+            {
+                name: "Black Jack Battle",
+                file: "gs-assets/game-files/black-jack-battle.html",
+                img: "img/game-icons/black-jack-battle.png"
+            },
+            {
+                name: "BTD 3",
+                file: "gs-assets/game-files/bloons-tower-defense-3.html",
+                img: "img/game-icons/bloons-tower-defense-3.png"
+            },
+            {
+                name: "BTD 4",
+                file: "gs-assets/game-files/bloons-tower-defense-4.html",
+                img: "img/game-icons/bloons-tower-defense-4.png"
+            },
+            {
+                name: "BTD 5",
+                file: "gs-assets/game-files/bloons-tower-defense-5.html",
+                img: "img/game-icons/bloons-tower-defense-5.png"
+            },
+            {
+                name: "Car Hex",
+                file: "gs-assets/game-files/car-hex.html",
+                img: "img/game-icons/car-hex-2.png"
+            },
+            {
+                name: "Cat Ninja",
+                file: "gs-assets/game-files/cat-ninja.html",
+                img: "img/game-icons/cat-ninja.png"
+            },
+            {
+                name: "Chrome Dino",
+                file: "gs-assets/game-files/chrome-dino.html",
+                img: "img/game-icons/dino-game.png"
+            },
+            {
+                name: "Cluster Rush",
+                file: "gs-assets/game-files/cluster-rush.html",
+                img: "img/game-icons/cluster-truck.png"
+            },
+            {
+                name: "Core Ball",
+                file: "gs-assets/game-files/core-ball.html",
+                img: "img/game-icons/core-ball.png"
+            },
+            {
+                name: "Death Run 3D",
+                file: "gs-assets/game-files/death-run-3d.html",
+                img: "img/game-icons/death-run-3d.png"
+            },
+            {
+                name: "Doge Miner",
+                file: "gs-assets/game-files/doge-miner.html",
+                img: "img/game-icons/doge-miner.png"
+            },
+            {
+                name: "Dragonball Devolution",
+                file: "gs-assets/game-files/dragonball-devolution.html",
+                img: "img/game-icons/dbz-devolution.png"
+            },
+            {
+                name: "Drive Mad",
+                file: "gs-assets/game-files/drive-mad.html",
+                img: "img/game-icons/drive-mad.png"
+            },
+            {
+                name: "Gun Mayhem 2",
+                file: "gs-assets/game-files/gun-mayhem-2.html",
+                img: "img/game-icons/gun-mayhem-2.png"
+            },
+            {
+                name: "Johnny Upgrade",
+                file: "gs-assets/game-files/johnny-upgrade.html",
+                img: "img/game-icons/johnny-upgrade.png"
+            },
+            {
+                name: "Learn to Fly",
+                file: "gs-assets/game-files/learn-to-fly.html",
+                img: "img/game-icons/learn-how-to-fly.png"
+            },
+            {
+                name: "Level Devil",
+                file: "gs-assets/game-files/level-devil.html",
+                img: "img/game-icons/level-devil.png"
+            },
+            {
+                name: "Minecraft",
+                file: "b-stuff/mcX.html",
+                img: "img/game-icons/minecraft.png"
+            },
+            {
+                name: "Monkey Mart",
+                file: "gs-assets/game-files/monkey-mart.html",
+                img: "img/game-icons/monkey-mart.png"
+            },
+            {
+                name: "One Chance",
+                file: "gs-assets/game-files/one-chance.html",
+                img: "img/game-icons/one-chance.png"
+            },
+            {
+                name: "Reactor - KF",
+                file: "gs-assets/game-files/reactor-knockoff.html",
+                img: "img/game-icons/reactor.png"
+            },
+            {
+                name: "Run 2",
+                file: "gs-assets/game-files/run-2.html",
+                img: "img/game-icons/run.png"
+            },
+            {
+                name: "Run 3",
+                file: "gs-assets/game-files/run-3.html",
+                img: "img/game-icons/run-3.png"
+            },
+            {
+                name: "Slope",
+                file: "gs-assets/game-files/slope.html",
+                img: "img/game-icons/slope.png"
+            },
+            {
+                name: "Sonic Flash Ultimate",
+                file: "gs-assets/game-files/ultimate-flash-sonic.html",
+                img: "img/game-icons/sonicfu.png"
+            },
+            {
+                name: "Strikeforce Kitty",
+                file: "gs-assets/game-files/strikeforce-kitty.html",
+                img: "img/game-icons/strikeforce-kitty.png"
+            },
+            {
+                name: "10 Minutes Till Dawn",
+                file: "gs-assets/game-files/10-minutes-till-dawn.html",
+                img: "img/game-icons/10-minutes-till-dawn.png"
+            },
+            {
+                name: "Balls and Bricks",
+                file: "gs-assets/game-files/ball-and-bricks.html",
+                img: "img/game-icons/balls-and-bricks.png"
+            },
+            {
+                name: "Getaway Shootout",
+                file: "gs-assets/game-files/getaway-shootout.html",
+                img: "img/game-icons/getaway-shootout.png"
+            },
+            {
+                name: "N-gon",
+                file: "gs-assets/game-files/n-gon.html",
+                img: "img/game-icons/n-gon.png"
+            },
+            {
+                name: "What we Behold",
+                file: "gs-assets/game-files/we-become-what-we-behold.html",
+                img: "img/game-icons/we-become-what-we-behold.png"
+            },
+            {
+                name: "Retro Bowl",
+                file: "gs-assets/game-files/retro-ball.html",
+                img: "img/game-icons/retro-bowl.png"
+            }
+        ];
+
+        gamesData.sort((a, b) => a.name.localeCompare(b.name));
+
+        // ─── Rendering ────────────────────────────────────────────────────────────────
+        // IntersectionObserver: swap data-src → src only when image enters the viewport
+        const imgObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    imgObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '200px'
+        }); // start loading 200 px before visible
+
+        function displayGames(games) {
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.innerHTML = '';
+
+            if (games.length === 0) {
+                gameContainer.innerHTML = '<div class="no-results">No Games Found</div>';
+                return;
+            }
+
+            // Build all cards into a fragment — one single DOM insertion at the end
+            const fragment = document.createDocumentFragment();
+
+            games.forEach(game => {
+                const gameDiv = document.createElement('div');
+                gameDiv.className = 'game-container';
+                gameDiv.onclick = () => openGame(game.file, game.name);
+
+                const gameImage = document.createElement('img');
+                gameImage.dataset.src = game.img; // lazy: real URL stored in data-src
+                gameImage.src = ''; // blank until observed
+                gameImage.alt = game.name;
+                gameImage.className = 'game-image';
+                gameImage.loading = 'lazy'; // native lazy-load as secondary hint
+                imgObserver.observe(gameImage);
+
+                const gameTitle = document.createElement('div');
+                gameTitle.textContent = game.name;
+                gameTitle.className = 'game-title';
+
+                gameDiv.appendChild(gameImage);
+                gameDiv.appendChild(gameTitle);
+                fragment.appendChild(gameDiv);
+            });
+
+            gameContainer.appendChild(fragment); // single reflow
+        }
+
+        displayGames(gamesData);
+
+        // ─── Search with debounce ─────────────────────────────────────────────────────
+        let searchTimer;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const term = e.target.value.toLowerCase().trim();
+                displayGames(term ? gamesData.filter(g => g.name.toLowerCase().includes(term)) : gamesData);
+            }, 150); // wait 150 ms after the user stops typing
+        });
+    </script>
+
+    <!-- Star animation deferred until browser is idle so it never delays first paint -->
+    <script>
+        function initStars() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            Object.assign(canvas.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100vw',
+                height: '100vh',
+                zIndex: '-1'
+            });
+            document.body.appendChild(canvas);
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            // 100 stars instead of 200 — visually identical, half the per-frame work
+            const stars = Array.from({
+                length: 100
+            }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 3 + 0.5
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                stars.forEach(s => {
+                    s.y += s.speed;
+                    if (s.y > canvas.height) {
+                        s.y = 0;
+                        s.x = Math.random() * canvas.width;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        // Use requestIdleCallback when available, otherwise defer 200 ms
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(initStars);
+        } else {
+            setTimeout(initStars, 200);
+        }
+    </script>
+</body>
+
+</html>
