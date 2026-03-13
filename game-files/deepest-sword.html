@@ -1,0 +1,128 @@
+<html lang="en-us">
+
+<head>
+     <script src="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/js/startup-v1.js"></script>
+    <script src="//www.google.com/jsapi"></script>
+    <script>
+        window.parent.maeExportApis_();
+    </script>
+
+
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <style>
+        html{box-sizing:border-box}*,*:before,*:after{box-sizing:inherit}html,body{height:100%}canvas{display:block}body{margin:0}#unity-container{width:100%;height:100%}#unity-canvas{width:100%;height:100%;background:#1f1f20}#loading-cover{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;justify-content:center;align-items:center}#unity-loading-bar{flex:1 1 auto;display:flex;flex-direction:column;justify-content:center;align-items:center}#unity-logo{text-align:center}#unity-logo img{max-width:80%}#unity-progress-bar-empty{width:80%;height:24px;margin:10px 20px 20px 10px;text-align:left;border:1px solid white;padding:2px}#unity-progress-bar-full{width:0;height:100%;background:white}.light #unity-progress-bar-empty{border-color:black}.light #unity-progress-bar-full{background:black}#unity-fullscreen-button{position:absolute;right:10px;bottom:10px;width:38px;height:38px;background:url('fullscreen-button.png') no-repeat center;background-size:contain}.spinner,.spinner:after{border-radius:50%;width:5em;height:5em}.spinner{margin:10px;font-size:10px;position:relative;text-indent:-9999em;border-top:1.1em solid rgba(255,255,255,0.2);border-right:1.1em solid rgba(255,255,255,0.2);border-bottom:1.1em solid rgba(255,255,255,0.2);border-left:1.1em solid #fff;transform:translateZ(0);animation:spinner-spin 1.1s infinite linear}@keyframes spinner-spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    </style>
+    <style type="text/css">
+        #button {
+          display:none;
+        }
+        .imgb_vis {
+          animation: imgb-animation 7s linear;
+        }
+        @keyframes imgb-animation {
+          10% {
+            transform: translateX(0);
+          }
+          20% {
+            transform: translateX(100px);
+          }
+          90% {
+            transform: translateX(100px);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+    </style>
+</head>
+
+<body class="dark">
+    <div id="unity-container" class="unity-desktop">
+        <canvas id="unity-canvas" style="cursor: default;" width="806" height="518"></canvas>
+    </div>
+    <div id="loading-cover" style="display: none;">
+        <div id="unity-loading-bar">
+            <div id="unity-logo"><img src=""></div>
+            <div id="unity-progress-bar-empty" style="">
+                <div id="unity-progress-bar-full" style="width: 100%;"></div>
+            </div>
+            <div class="spinner" style="display: none;"></div>
+        </div>
+    </div>
+    <div id="unity-fullscreen-button" style="display: none;"></div>
+    <script>
+        const hideFullScreenButton = "1";
+          const buildUrl = "https://cdn.jsdelivr.net/gh/1642128/deepest-sword@c91462847c4fe6e4c7d670d63145ec83986b38c3/Build";
+          const loaderUrl = buildUrl + "/WebBuilds.loader.js";
+          const config = {
+            dataUrl: buildUrl + "/WebBuilds.data",
+            frameworkUrl: buildUrl + "/WebBuilds.framework.js",
+            codeUrl: buildUrl + "/WebBuilds.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+          };
+    
+          const container = document.querySelector("#unity-container");
+          const canvas = document.querySelector("#unity-canvas");
+          const loadingCover = document.querySelector("#loading-cover");
+          const progressBarEmpty = document.querySelector("#unity-progress-bar-empty");
+          const progressBarFull = document.querySelector("#unity-progress-bar-full");
+          const fullscreenButton = document.querySelector("#unity-fullscreen-button");
+          const spinner = document.querySelector('.spinner');
+    
+          const canFullscreen = (function() {
+            for (const key of [
+                'exitFullscreen',
+                'webkitExitFullscreen',
+                'webkitCancelFullScreen',
+                'mozCancelFullScreen',
+                'msExitFullscreen',
+              ]) {
+              if (key in document) {
+                return true;
+              }
+            }
+            return false;
+          }());
+    
+          if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+            container.className = "unity-mobile";
+            config.devicePixelRatio = 1;
+          }
+          loadingCover.style.display = "";
+    
+          const script = document.createElement("script");
+          script.src = loaderUrl;
+          script.onload = () => {
+            createUnityInstance(canvas, config, (progress) => {
+              spinner.style.display = "none";
+              progressBarEmpty.style.display = "";
+              progressBarFull.style.width = `${100 * progress}%`;
+            }).then((unityInstance) => {
+              loadingCover.style.display = "none";
+              if (canFullscreen) {
+                if (!hideFullScreenButton) {
+                  fullscreenButton.style.display = "";
+                }
+                fullscreenButton.onclick = () => {
+                  unityInstance.SetFullscreen(1);
+                };
+              }
+            }).catch((message) => {
+              alert(message);
+            });
+          };
+               document.body.appendChild(script);
+    </script>
+    <script src="https://cdn.jsdelivr.net/gh/1642128/deepest-sword@c91462847c4fe6e4c7d670d63145ec83986b38c3/Build/WebBuilds.loader.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/st39/sdk@main/api.js"></script>
+
+    <div id="button" class="imgb imgb_vis" style="position: fixed; top: 10%; left: -100px; z-index: 10; display: none;">
+        <a target="_blank" href="https://sites.google.com/view/classroom6x/" title="More Unblocked Games 6x"><img src="https://lh4.googleusercontent.com/lUEWrXMVEr4AdjKISyJahDRJ61bwfvHdpeYm86Djn5U8oCm9dI60NGXSBqad9HUvzTXgqlkosA_hWV-VuXPjzrkGvh3_kNSgYk8ySWzXnDpbBCBiooyBbU8oBy3YBZMDkW8RcRVmDuC0raoeqZBm8kBlqs6c5mdfkJeN2aE68lXS_lcOZ5_F7lIuM6qLVg" width="100"
+            height="30" style="cursor:pointer;" alt="Unblocked Games Classroom 6x"></a>
+    </div>
+    <script src="https://cdn.jsdelivr.net/gh/1642128/deepest-sword@c91462847c4fe6e4c7d670d63145ec83986b38c3/Build/WebBuilds.framework.js"></script>
+</body>
+
+</html>
