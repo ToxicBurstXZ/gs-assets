@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<base href="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/">
+<script src="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/js/startup-v1.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/js/extra.js"></script>
+<title>Sugar Sugar</title>
+  <style>
+    html,body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    }
+  </style>
+  <body>
+    <div id='gameframe'></div>
+    </body>
+    <script src='ruffle/ruffle.js'></script>
+    <script>
+      const queryString = window.location.search;
+      const urlParams = new URLSearchParams(queryString);
+      const gameName = urlParams.get('notebook');
+      var swfobject = {};
+      swfobject.embedSWF = function(url, cont, width, height){
+        var ruffle = window.RufflePlayer.newest(),
+          player = Object.assign(document.getElementById(cont).appendChild(ruffle.createPlayer()), {
+          autoplay: "on",
+          width: width,
+          height: height,
+          style: 'width: ' + width + '; height: ' + height + ';'
+          });
+
+      player.load({ url: url });
+      }
+      swfURL = 'ruffle/swf/duck-life.swf'
+      swfobject.embedSWF(swfURL, 'gameframe', "100vw", "100vh");
+    </script>
+</html>
