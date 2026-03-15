@@ -1,0 +1,61 @@
+<html>
+
+<head>
+    <script src="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/js/startup-v1.js"></script>
+    <base target="_blank">
+    <style type="text/css">
+        #button {
+          display:none;
+        }
+        .imgb_vis {
+          animation: imgb-animation 7s linear;
+        }
+        @keyframes imgb-animation {
+          10% {
+            transform: translateX(0);
+          }
+          20% {
+            transform: translateX(100px);
+          }
+          90% {
+            transform: translateX(100px);
+          }
+          100% {
+            transform: translateX(0);
+          }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/Assets@main/js/extra.js"></script>
+</head>
+
+<body dir="ltr">
+    <script src="https://cdn.jsdelivr.net/gh/lee2sman/everyday@d45d601d2c4d60adf809a0b677c00b7d12aba7e9/96/TemplateData/UnityProgress.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/NovaAppsInc/fracital-proxy@808c643ed7924cfb696a68ccdd9d2b97c12a4bee/g/rooftop-snipers/UnityLoader.js"></script>
+    <script>
+        var gameInstance = UnityLoader.instantiate("gameContainer", "https://cdn.jsdelivr.net/gh/NovaAppsInc/fracital-proxy@808c643ed7924cfb696a68ccdd9d2b97c12a4bee/g/rooftop-snipers/rooftop-snipers.json", {onProgress: UnityProgress,Module:{onRuntimeInitialized: function() {UnityProgress(gameInstance, "complete")}}});
+    </script>
+    <script src=""></script>
+    <div class="webgl-content">
+        <div id="gameContainer" style="width: 100vw; height: 100vh; padding: 0px; margin: 0px; border: 0px; position: relative; background: black;">
+            <canvas style="" id="#canvas" width="1691" height="870"></canvas>
+            <div class="logo Dark" style="display: none;"></div>
+            <div class="progress Dark" style="display: none;">
+                <div class="empty" style="width: 0%;"></div>
+                <div class="full" style="width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <link href="https://cdn.jsdelivr.net/gh/lee2sman/everyday@d45d601d2c4d60adf809a0b677c00b7d12aba7e9/96/TemplateData/style.css" rel="stylesheet">
+
+
+
+
+    <script></script>
+    <script src="blob:https://680764502-atari-embeds.googleusercontent.com/62ee8b30-f212-48bc-8f79-9a8ad6ade503" id="6031485ea33f43d4d837f28bc43b4fbf"></script>
+    <script src="blob:https://680764502-atari-embeds.googleusercontent.com/14617fd1-6e45-4390-91e5-40c496a61426" id="b37aa91f7b5682b3dbe8153401c1171d"></script>
+</body>
+
+</html>
