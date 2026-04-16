@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 1280 900">
+<defs><style>svg{background:#000}</style></defs>
+<foreignObject x="0" y="0" width="100%" height="100%">
+<div xmlns="http://www.w3.org/1999/xhtml" style="width:100%;min-height:100vh;margin:0;padding:0;background:#000;font-family:Arial,sans-serif;text-align:center;">
+<style>
+*{box-sizing:border-box}
+::placeholder{color:#b400ff;opacity:.8}
+.gc{display:inline-block;background:#000;padding:10px;border-radius:6px;margin:25px;max-width:200px;vertical-align:top;transition:transform .2s,box-shadow .2s;cursor:pointer}
+.gc:hover{transform:scale(1.1);box-shadow:0 0 10px rgba(180,0,255,1)}
+.gi{width:100%;height:150px;border-radius:10px;object-fit:cover}
+.gt{text-align:center;color:#fff;margin-top:10px;font-weight:bold;font-size:12px;font-family:monospace}
+#si{background:#111;color:#fff;padding:15px 30px;border:2px solid #460163;border-radius:10px;font-size:18px;font-family:monospace;font-weight:bold;display:block;margin:20px auto;max-width:500px;width:90%;outline:none}
+.nr{color:#fff;font-size:30px;font-weight:bold;font-family:monospace;margin:40px}
+#sc{position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:-1;pointer-events:none}
+</style>
+<canvas id="sc"></canvas>
+<input type="text" id="si" placeholder="Search games..."/>
+<div id="games"></div>
+<script>
+(function(){
+var cv=document.getElementById('sc'),ctx=cv.getContext('2d');
+function rs(){cv.width=window.innerWidth;cv.height=window.innerHeight}rs();
+window.addEventListener('resize',rs);
+var st=Array.from({length:100},function(){return{x:Math.random()*cv.width,y:Math.random()*cv.height,sz:Math.random()*2+.5,sp:Math.random()*3+.5}});
+(function a(){ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='white';st.forEach(function(s){s.y+=s.sp;if(s.y>cv.height){s.y=0;s.x=Math.random()*cv.width}ctx.beginPath();ctx.arc(s.x,s.y,s.sz,0,Math.PI*2);ctx.fill()});requestAnimationFrame(a)})();
+var DB='GCD',ST='GF',DUR=7776e6,BASE='https://cdn.jsdelivr.net/gh/ToxicBurstXZ/';
+function odb(){return new Promise(function(r,j){var q=indexedDB.open(DB,1);q.onupgradeneeded=function(e){var d=e.target.result;if(!d.objectStoreNames.contains(ST))d.createObjectStore(ST,{keyPath:'url'})};q.onsuccess=function(e){r(e.target.result)};q.onerror=function(e){j(e.target.error)}})}
+function sv(url,c){return odb().then(function(d){return new Promise(function(r,j){var s=d.transaction(ST,'readwrite').objectStore(ST);s.put({url:url,content:c,timestamp:Date.now()}).onsuccess=r;s.put({url:url,content:c,timestamp:Date.now()}).onerror=j})})}
+function gf(url){return odb().then(function(d){return new Promise(function(r,j){var s=d.transaction(ST,'readonly').objectStore(ST);s.get(url).onsuccess=function(e){var x=e.target.result;if(x&&(Date.now()-x.timestamp)<DUR){r(x.content)}else{fetch(url).then(function(q){return q.text()}).then(function(t){sv(url,t);r(t)}).catch(j)}};s.get(url).onerror=j})})}
+function og(file,name){gf(BASE+file).then(function(t){var w=window.open('','_blank');if(w){w.document.open();w.document.write(t);w.document.close()}else alert('Allow popups to open '+name)}).catch(function(){alert('Failed to load '+name)})}
+var gd=[
+{n:"2048",f:"gs-assets/game-files/2048.html",i:"img/game-icons/2048.png"},
+{n:"3 Slices 2",f:"gs-assets/game-files/3-slices-2.html",i:"img/game-icons/3-slices-2.png"},
+{n:"60 Seconds Burger Run",f:"gs-assets/game-files/60-seconds-burger-run.html",i:"img/game-icons/60-second-burger-run.png"},
+{n:"Achilles",f:"gs-assets/game-files/achilles.html",i:"img/game-icons/achilles.png"},
+{n:"Agar.io SX",f:"gs-assets/game-files/agario.html",i:"img/game-icons/agario-sx.png"},
+{n:"Awesome Tanks 2",f:"gs-assets/game-files/awesome-tank-2.html",i:"img/game-icons/awesome-tanks-2.png"},
+{n:"Bad Ice Cream",f:"gs-assets/game-files/bad-ice-cream.html",i:"img/game-icons/bad-ice-cream.png"},
+{n:"Bad Ice Cream 2",f:"gs-assets/game-files/bad-ice-cream-2.html",i:"img/game-icons/bad-ice-cream-2.png"},
+{n:"Bad Ice Cream 3",f:"gs-assets/game-files/bad-ice-cream-3.html",i:"img/game-icons/bad-ice-cream-3.png"},
+{n:"Binding of Isaac",f:"gs-assets/game-files/binding-of-isaac.html",i:"img/game-icons/bfi.jpg"},
+{n:"Black Jack Battle",f:"gs-assets/game-files/black-jack-battle.html",i:"img/game-icons/black-jack-battle.png"},
+{n:"BTD 3",f:"gs-assets/game-files/bloons-tower-defense-3.html",i:"img/game-icons/bloons-tower-defense-3.png"},
+{n:"BTD 4",f:"gs-assets/game-files/bloons-tower-defense-4.html",i:"img/game-icons/bloons-tower-defense-4.png"},
+{n:"BTD 5",f:"gs-assets/game-files/bloons-tower-defense-5.html",i:"img/game-icons/bloons-tower-defense-5.png"},
+{n:"Car Hex",f:"gs-assets/game-files/car-hex.html",i:"img/game-icons/car-hex-2.png"},
+{n:"Cat Ninja",f:"gs-assets/game-files/cat-ninja.html",i:"img/game-icons/cat-ninja.png"},
+{n:"Chrome Dino",f:"gs-assets/game-files/chrome-dino.html",i:"img/game-icons/dino-game.png"},
+{n:"Cluster Rush",f:"gs-assets/game-files/cluster-rush.html",i:"img/game-icons/cluster-truck.png"},
+{n:"Core Ball",f:"gs-assets/game-files/core-ball.html",i:"img/game-icons/core-ball.png"},
+{n:"Death Run 3D",f:"gs-assets/game-files/death-run-3d.html",i:"img/game-icons/death-run-3d.png"},
+{n:"Doge Miner",f:"gs-assets/game-files/doge-miner.html",i:"img/game-icons/doge-miner.png"},
+{n:"Dragonball Devolution",f:"gs-assets/game-files/dragonball-devolution.html",i:"img/game-icons/dbz-devolution.png"},
+{n:"Drive Mad",f:"gs-assets/game-files/drive-mad.html",i:"img/game-icons/drive-mad.png"},
+{n:"Gun Mayhem 2",f:"gs-assets/game-files/gun-mayhem-2.html",i:"img/game-icons/gun-mayhem-2.png"},
+{n:"Johnny Upgrade",f:"gs-assets/game-files/johnny-upgrade.html",i:"img/game-icons/johnny-upgrade.png"},
+{n:"Learn to Fly",f:"gs-assets/game-files/learn-to-fly.html",i:"img/game-icons/learn-how-to-fly.png"},
+{n:"Level Devil",f:"gs-assets/game-files/level-devil.html",i:"img/game-icons/level-devil.png"},
+{n:"Minecraft",f:"b-stuff/mcX.html",i:"img/game-icons/minecraft.png"},
+{n:"Monkey Mart",f:"gs-assets/game-files/monkey-mart.html",i:"img/game-icons/monkey-mart.png"},
+{n:"One Chance",f:"gs-assets/game-files/one-chance.html",i:"img/game-icons/one-chance.png"},
+{n:"Reactor - KF",f:"gs-assets/game-files/reactor-knockoff.html",i:"img/game-icons/reactor.png"},
+{n:"Run 2",f:"gs-assets/game-files/run-2.html",i:"img/game-icons/run.png"},
+{n:"Run 3",f:"gs-assets/game-files/run-3.html",i:"img/game-icons/run-3.png"},
+{n:"Slope",f:"gs-assets/game-files/slope.html",i:"img/game-icons/slope.png"},
+{n:"Sonic Flash Ultimate",f:"gs-assets/game-files/ultimate-flash-sonic.html",i:"img/game-icons/sonicfu.png"},
+{n:"Strikeforce Kitty",f:"gs-assets/game-files/strikeforce-kitty.html",i:"img/game-icons/strikeforce-kitty.png"},
+{n:"10 Minutes Till Dawn",f:"gs-assets/game-files/10-minutes-till-dawn.html",i:"img/game-icons/10-minutes-till-dawn.png"},
+{n:"Balls and Bricks",f:"gs-assets/game-files/ball-and-bricks.html",i:"img/game-icons/balls-and-bricks.png"},
+{n:"Getaway Shootout",f:"gs-assets/game-files/getaway-shootout.html",i:"img/game-icons/getaway-shootout.png"},
+{n:"N-gon",f:"gs-assets/game-files/n-gon.html",i:"img/game-icons/n-gon.png"},
+{n:"We Become",f:"gs-assets/game-files/we-become-what-we-behold.html",i:"img/game-icons/we-become-what-we-behold.png"},
+{n:"Retro Bowl",f:"gs-assets/game-files/retro-ball.html",i:"img/game-icons/retro-bowl.png"},
+{n:"A Small World Cup",f:"gs-assets/game-files/a-small-world-cup.html",i:"img/game-icons/a-small-world-cup.png"},
+{n:"Bacon May Die",f:"gs-assets/game-files/bacon-may-die.html",i:"img/game-icons/bacon-may-die.png"},
+{n:"CircloO 2",f:"gs-assets/game-files/circloo-2.html",i:"img/game-icons/circloo-2.png"},
+{n:"Escape Road",f:"gs-assets/game-files/escape-road.html",i:"img/game-icons/escape-road.png"},
+{n:"Granny",f:"gs-assets/game-files/granny.html",i:"img/game-icons/granny.png"},
+{n:"House of Hazards",f:"gs-assets/game-files/house-of-hazards.html",i:"img/game-icons/house-of-hazards.png"},
+{n:"Snow Rider 3D",f:"gs-assets/game-files/snow-rider-3d.html",i:"img/game-icons/snow-rider-3d.png"},
+{n:"Tunnel Rush",f:"gs-assets/game-files/tunnel-rush.html",i:"img/game-icons/tunnel-rush.png"},
+{n:"Drift Boss",f:"gs-assets/game-files/drift-boss.html",i:"img/game-icons/drift-boss.png"},
+{n:"Cookie Clicker",f:"gs-assets/game-files/cookie-clicker.html",i:"img/game-icons/cookie-clicker.png"},
+{n:"Bloxorz",f:"gs-assets/game-files/bloxorz.html",i:"img/game-icons/bloxorz.png"},
+{n:"Fancy Pants Adventure 2",f:"gs-assets/game-files/fancy-pants-adventure-2.html",i:"img/game-icons/fancy-pants-adventure-2.png"},
+{n:"12 Mini Battles",f:"gs-assets/game-files/12-mini-battles.html",i:"img/game-icons/mini-battles.png"},
+{n:"Deepest Sword",f:"gs-assets/game-files/deepest-sword.html",i:"img/game-icons/deepest-sword.png"},
+{n:"Draw Climber",f:"gs-assets/game-files/draw-climber.html",i:"img/game-icons/draw-climber.png"},
+{n:"Recoil",f:"gs-assets/game-files/recoil.html",i:"img/game-icons/recoil.png"},
+{n:"Iron Snout",f:"gs-assets/game-files/iron-snout.html",i:"img/game-icons/iron-snout.png"},
+{n:"Gobble",f:"gs-assets/game-files/gobble.html",i:"img/game-icons/gobble.png"},
+{n:"Curve Ball 3D",f:"gs-assets/game-files/curve-ball.html",i:"img/game-icons/curve-ball-3d.png"},
+{n:"Duck Life",f:"gs-assets/game-files/duck-life.html",i:"img/game-icons/duck-life.png"},
+{n:"Duck Life 2",f:"gs-assets/game-files/duck-life-2.html",i:"img/game-icons/duck-life-2.png"},
+{n:"Duck Life 3",f:"gs-assets/game-files/duck-life-3.html",i:"img/game-icons/duck-life-3.png"},
+{n:"Duck Life 4",f:"gs-assets/game-files/duck-life-4.html",i:"img/game-icons/duck-life-4.png"},
+{n:"Sugar Sugar",f:"gs-assets/game-files/sugar-sugar.html",i:"img/game-icons/sugar-sugar.png"},
+{n:"Stack",f:"gs-assets/game-files/stack.html",i:"img/game-icons/stack.png"},
+{n:"Stickman Hook",f:"gs-assets/game-files/stickman-hook.html",i:"img/game-icons/stickman-hook.png"},
+{n:"Basketball Random",f:"gs-assets/game-files/basketball-random.html",i:"img/game-icons/basketball-random.png"},
+{n:"Soccer Random",f:"gs-assets/game-files/soccer-random.html",i:"img/game-icons/soccer-random.png"},
+{n:"Boxing Random",f:"gs-assets/game-files/boxing-random.html",i:"img/game-icons/boxing-random.png"},
+{n:"Volley Random",f:"gs-assets/game-files/volley-random.html",i:"img/game-icons/volley-random.png"},
+{n:"Big Shot Boxing",f:"gs-assets/game-files/big-shot-boxing.html",i:"img/game-icons/big-shot-boxing.png"},
+{n:"Stacktris",f:"gs-assets/game-files/stacktris.html",i:"img/game-icons/stacktris.png"},
+{n:"Doodle Jump",f:"gs-assets/game-files/doodle-jump.html",i:"img/game-icons/doodle-jump.png"},
+{n:"Idle Breakout",f:"gs-assets/game-files/idle-breakout.html",i:"img/game-icons/idle-breakout.png"},
+{n:"Mega Miner",f:"gs-assets/game-files/mega-miner.html",i:"img/game-icons/mega-miner.png"},
+{n:"FNAF",f:"gs-assets/game-files/five-nights-at-freddys.html",i:"img/game-icons/five-nights-at-freddys.png"},
+{n:"FNAF 2",f:"gs-assets/game-files/five-nights-at-freddys-2.html",i:"img/game-icons/five-nights-at-freddys-2.png"},
+{n:"FNAF 3",f:"gs-assets/game-files/five-nights-at-freddys-3.html",i:"img/game-icons/five-nights-at-freddys-3.png"},
+{n:"FNAF 4",f:"gs-assets/game-files/five-nights-at-freddys-4.html",i:"img/game-icons/five-nights-at-freddys-4.png"},
+{n:"Wordle+",f:"gs-assets/game-files/wordle.html",i:"img/game-icons/wordle.png"},
+{n:"Retro Bowl College",f:"gs-assets/game-files/retro-bowl-college.html",i:"img/game-icons/retro-bowl-college.png"},
+{n:"Slope 2",f:"gs-assets/game-files/slope-2.html",i:"img/game-icons/slope-2.png"},
+{n:"Hobo",f:"gs-assets/game-files/hobo.html",i:"img/game-icons/hobo.png"},
+{n:"Hobo 2",f:"gs-assets/game-files/hobo-2.html",i:"img/game-icons/hobo-2.png"},
+{n:"Hobo 3",f:"gs-assets/game-files/hobo-3.html",i:"img/game-icons/hobo-3.png"},
+{n:"Hobo 4",f:"gs-assets/game-files/hobo-4.html",i:"img/game-icons/hobo-4.png"},
+{n:"Hobo 5",f:"gs-assets/game-files/hobo-5.html",i:"img/game-icons/hobo-5.png"},
+{n:"Hobo 6",f:"gs-assets/game-files/hobo-6.html",i:"img/game-icons/hobo-6.png"},
+{n:"Hobo 7",f:"gs-assets/game-files/hobo-7.html",i:"img/game-icons/hobo-7.png"},
+{n:"FNAF Sister Location",f:"gs-assets/game-files/five-nights-at-freddys-sl.html",i:"img/game-icons/fnaf-sl.png"},
+{n:"FNAF Pizza Simulator",f:"gs-assets/game-files/five-nights-at-freddys-ps.html",i:"img/game-icons/fnaf-ps.png"},
+{n:"Tiny Fishing",f:"gs-assets/game-files/tiny-fishing.html",i:"img/game-icons/tiny-fishing.png"},
+{n:"Rooftop Snipers",f:"gs-assets/game-files/rooftop-snipers.html",i:"img/game-icons/rooftop-snipers.png"},
+{n:"The Impossible Quiz",f:"gs-assets/game-files/theimpossiblequiz.html",i:"img/game-icons/the-impossible-quiz.png"},
+{n:"Jetpack Joyride",f:"gs-assets/game-files/jetpack-joyride.html",i:"img/game-icons/jetpack-joyride.png"},
+{n:"Fireboy and Watergirl",f:"gs-assets/game-files/fire-boy-and-water-girl.html",i:"img/game-icons/fbwg.png"},
+{n:"Stick Merge",f:"gs-assets/game-files/stick-merge.html",i:"img/game-icons/stick-merge.png"},
+{n:"FNAF UCN",f:"gs-assets/game-files/five-nights-at-freddys-ucn.html",i:"img/game-icons/fnaf-ucn.png"}
+];
+gd.sort(function(a,b){return a.n.localeCompare(b.n)});
+var ob=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting){var i=x.target;i.src=i.dataset.src;ob.unobserve(i)}})},{rootMargin:'200px'});
+function show(list){
+  var gc=document.getElementById('games');gc.innerHTML='';
+  if(!list.length){gc.innerHTML='<div class="nr">No Games Found</div>';return}
+  var fr=document.createDocumentFragment();
+  list.forEach(function(g){
+    var d=document.createElement('div');d.className='gc';d.onclick=function(){og(g.f,g.n)};
+    var im=document.createElement('img');im.dataset.src=BASE+g.i;im.src='';im.alt=g.n;im.className='gi';im.loading='lazy';ob.observe(im);
+    var t=document.createElement('div');t.textContent=g.n;t.className='gt';
+    d.appendChild(im);d.appendChild(t);fr.appendChild(d);
+  });
+  gc.appendChild(fr);
+}
+show(gd);
+var tm;
+document.getElementById('si').addEventListener('input',function(e){
+  clearTimeout(tm);tm=setTimeout(function(){var q=e.target.value.toLowerCase().trim();show(q?gd.filter(function(g){return g.n.toLowerCase().includes(q)}):gd)},150);
+});
+})();
+</script>
+</div>
+</foreignObject>
+</svg>
+
