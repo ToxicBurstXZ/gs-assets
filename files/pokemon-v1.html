@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base href="https://cdn.jsdelivr.net/gh/ToxicBurstXZ/">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+    <style>
+        body {
+            background-color: #000000;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .button {
+            background-color: #006400;
+            color: #fff;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 20px;
+            font-size: 18px;
+            text-decoration: none;
+            display: block;
+            margin: 20px auto;
+            cursor: pointer;
+            max-width: fit-content;
+        }
+
+        .button:hover {
+            background-color: #004500;
+        }
+
+        .button-container {
+            margin: 20px 0;
+        }
+
+        ::placeholder {
+            color: white;
+            opacity: 80%;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #000000;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 25px;
+            max-width: 200px;
+            display: inline-block;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .game-container:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 1);
+            cursor: pointer;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 150px;
+            border-radius: 10px 10px 10px 10px;
+            object-fit: cover;
+        }
+
+        .game-title {
+            text-align: center;
+            color: #fff;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .games-list-container {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+
+        #search-input {
+            background-color: #111;
+            color: #fff;
+            padding: 15px 30px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            font-size: 18px;
+            font-family: monospace;
+            font-weight: bold;
+            display: block;
+            margin: 20px auto;
+            max-width: 500px;
+            width: 90%;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        #search-input:hover {
+            background-color: #222;
+            border-color: #888;
+        }
+
+        #search-input:focus {
+            background-color: #222;
+            border-color: #888;
+        }
+
+        .no-results {
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            font-family: monospace;
+            margin: 40px;
+        }
+
+        /* ── Filter buttons ── */
+        #filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px auto 20px;
+        }
+
+        .filter-btn {
+            background-color: #111;
+            color: #fff;
+            padding: 10px 22px;
+            border: 2px solid #444;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.15s, border-color 0.15s;
+        }
+
+        .filter-btn:hover {
+            background-color: #222;
+            border-color: #888;
+        }
+
+        .filter-btn.active {
+            background-color: #555;
+            border-color: #888;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="text" id="search-input" placeholder="Search games...">
+
+    <div id="filter-bar">
+        <button class="filter-btn active" data-type="all">All</button>
+        <button class="filter-btn" data-type="gb">Gen 1</button>
+        <button class="filter-btn" data-type="gbc">Gen 2</button>
+        <button class="filter-btn" data-type="gba">Gen 3</button>
+        <button class="filter-btn" data-type="nds">Gen 4</button>
+    </div>
+
+    <div id="game-container"></div>
+
+    <script>
+        // ─── Cache Configuration ──────────────────────────────────────────────────────
+        const DB_NAME = 'GameCacheDB';
+        const STORE_NAME = 'GameFiles';
+        const CACHE_DURATION = 90 * 24 * 60 * 60 * 1000;
+
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, 1);
+                request.onupgradeneeded = (e) => {
+                    const db = e.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME))
+                        db.createObjectStore(STORE_NAME, {
+                            keyPath: 'url'
+                        });
+                };
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        }
+
+        async function saveToCache(url, content) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const store = db.transaction(STORE_NAME, 'readwrite').objectStore(STORE_NAME);
+                const req = store.put({
+                    url,
+                    content,
+                    timestamp: Date.now()
+                });
+                req.onsuccess = () => resolve();
+                req.onerror = () => reject(new Error('Cache error'));
+            });
+        }
+
+        async function getFileFromCache(url) {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const store = db.transaction(STORE_NAME, 'readonly').objectStore(STORE_NAME);
+                store.get(url).onsuccess = async (e) => {
+                    const data = e.target.result;
+                    if (data && (Date.now() - data.timestamp) < CACHE_DURATION) {
+                        resolve(data.content);
+                    } else {
+                        try {
+                            const text = await fetch(url).then(r => r.text());
+                            await saveToCache(url, text);
+                            resolve(text);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    }
+                };
+                store.get(url).onerror = () => reject(new Error('DB error'));
+            });
+        }
+
+        function openGame(fileUrl, gameName) {
+            getFileFromCache(fileUrl).then((text) => {
+                const w = window.open('', '_blank');
+                if (w) {
+                    w.document.open();
+                    w.document.write(text);
+                    w.document.close();
+                } else {
+                    alert('Failed to open ' + gameName + '. Please allow popups.');
+                }
+            }).catch(() => alert('Failed to load ' + gameName + '.'));
+        }
+
+        // ─── Game Data ────────────────────────────────────────────────────────────────
+        const gamesData = [
+            {
+                name: "Yellow",
+                file: "gs-assets/game-files/pokemon-yellow.html",
+                img: "img/emulator-icons/pokemonyellow.png",
+                type: "gb"
+            },
+            {
+                name: "Blue",
+                file: "gs-assets/game-files/pokemon-blue.html",
+                img: "img/emulator-icons/pokemonblue.png",
+                type: "gb"
+            },
+            {
+                name: "Red",
+                file: "gs-assets/game-files/pokemon-red.html",
+                img: "img/emulator-icons/pokemon-red.png",
+                type: "gb"
+            },
+            {
+                name: "Gold",
+                file: "gs-assets/game-files/pokemon-gold.html",
+                img: "img/emulator-icons/pokemongold.png",
+                type: "gbc"
+            },
+            {
+                name: "Sliver",
+                file: "gs-assets/game-files/pokemon-sliver.html",
+                img: "img/emulator-icons/pokemonsliver.png",
+                type: "gbc"
+            },
+            {
+                name: "Crystal",
+                file: "gs-assets/game-files/pokemon-crystal.html",
+                img: "img/emulator-icons/pokemoncrystal.png",
+                type: "gbc"
+            },
+            {
+                name: "Ruby",
+                file: "gs-assets/game-files/pokemon-ruby.html",
+                img: "img/emulator-icons/pokemonruby.png",
+                type: "gba"
+            },
+            {
+                name: "Sapphire",
+                file: "gs-assets/files-bugged/lala.html",
+                img: "img/emulator-icons/pokemonsapphire.png",
+                type: "gba"
+            },
+            {
+                name: "Emerald",
+                file: "gs-assets/game-files/pokemon-emerald.html",
+                img: "img/emulator-icons/pokemonemerald.png",
+                type: "gba"
+            },
+            {
+                name: "Leaf Green",
+                file: "gs-assets/game-files/pokemon-leafgreen.html",
+                img: "img/emulator-icons/pokemonleafgreen.png",
+                type: "gba"
+            },
+            {
+                name: "Fire Red",
+                file: "gs-assets/game-files/pokemon-firered.html",
+                img: "img/emulator-icons/pokemonfirered.png",
+                type: "gba"
+            },
+            {
+                name: "Platinum",
+                file: "gs-assets/game-files/pokemon-platinum.html",
+                img: "img/emulator-icons/pokemonplatinum.png",
+                type: "nds"
+            },
+            {
+                name: "Pearl",
+                file: "gs-assets/game-files/pokemon-pearl.html",
+                img: "img/emulator-icons/pokemonpearl.png",
+                type: "nds"
+            },
+            {
+                name: "Diamond",
+                file: "gs-assets/game-files/pokemon-diamond.html",
+                img: "img/emulator-icons/pokemondiamond.png",
+                type: "nds"
+            },
+        ];
+
+        gamesData.sort((a, b) => a.name.localeCompare(b.name));
+
+        // ─── Filter State ─────────────────────────────────────────────────────────────
+        let activeType = 'all';
+        let searchTerm = '';
+
+        function getFilteredGames() {
+            return gamesData.filter(g => {
+                const matchesType = activeType === 'all' || g.type === activeType;
+                const matchesSearch = !searchTerm || g.name.toLowerCase().includes(searchTerm);
+                return matchesType && matchesSearch;
+            });
+        }
+
+        // ─── Filter Buttons ───────────────────────────────────────────────────────────
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeType = btn.dataset.type;
+                displayGames(getFilteredGames());
+            });
+        });
+
+        // ─── Rendering ────────────────────────────────────────────────────────────────
+        const imgObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    imgObserver.unobserve(img);
+                }
+            });
+        }, {
+            rootMargin: '200px'
+        });
+
+        function displayGames(games) {
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.innerHTML = '';
+
+            if (games.length === 0) {
+                gameContainer.innerHTML = '<div class="no-results">No Games Found</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            games.forEach(game => {
+                const gameDiv = document.createElement('div');
+                gameDiv.className = 'game-container';
+                gameDiv.onclick = () => openGame(game.file, game.name);
+
+                const gameImage = document.createElement('img');
+                gameImage.dataset.src = game.img;
+                gameImage.src = '';
+                gameImage.alt = game.name;
+                gameImage.className = 'game-image';
+                gameImage.loading = 'lazy';
+                imgObserver.observe(gameImage);
+
+                const gameTitle = document.createElement('div');
+                gameTitle.textContent = game.name;
+                gameTitle.className = 'game-title';
+
+                gameDiv.appendChild(gameImage);
+                gameDiv.appendChild(gameTitle);
+                fragment.appendChild(gameDiv);
+            });
+
+            gameContainer.appendChild(fragment);
+        }
+
+        displayGames(getFilteredGames());
+
+        // ─── Search with debounce ─────────────────────────────────────────────────────
+        let searchTimer;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                searchTerm = e.target.value.toLowerCase().trim();
+                displayGames(getFilteredGames());
+            }, 150);
+        });
+    </script>
+
+    <!-- Star animation deferred until browser is idle so it never delays first paint -->
+    <script>
+        function initStars() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            Object.assign(canvas.style, {
+                position: 'fixed',
+                top: '0',
+                left: '0',
+                width: '100vw',
+                height: '100vh',
+                zIndex: '-1'
+            });
+            document.body.appendChild(canvas);
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const stars = Array.from({
+                length: 100
+            }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                speed: Math.random() * 3 + 0.5
+            }));
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                stars.forEach(s => {
+                    s.y += s.speed;
+                    if (s.y > canvas.height) {
+                        s.y = 0;
+                        s.x = Math.random() * canvas.width;
+                    }
+                    ctx.beginPath();
+                    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(initStars);
+        } else {
+            setTimeout(initStars, 200);
+        }
+    </script>
+</body>
+
+</html>
