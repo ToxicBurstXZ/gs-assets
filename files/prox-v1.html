@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Proxy Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #000;
+      min-height: 100vh;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    body::before {
+      content: "";
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(255,255,255,0.012) 3px,
+        rgba(255,255,255,0.012) 4px
+      );
+      z-index: 9998;
+    }
+
+    .portal-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 24px;
+      min-height: 100vh;
+    }
+
+    h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: #fff;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin-top: 10px;
+      font-size: 12px;
+      letter-spacing: .2em;
+      color: #555;
+      text-align: center;
+    }
+
+    .subtitle span { color: #b400ff; }
+
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 260px);
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .proxy-btn {
+      background: #000;
+      border: 1px solid #b400ff;
+      padding: 22px 28px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      transition: box-shadow .2s, transform .15s;
+      color: #b400ff;
+      font-family: 'Share Tech Mono', monospace;
+      text-align: left;
+    }
+
+    .proxy-btn::after {
+      content: "";
+      position: absolute;
+      top: 0; right: 0;
+      width: 12px; height: 12px;
+      border-top: 1px solid #b400ff;
+      border-right: 1px solid #b400ff;
+    }
+
+    .proxy-btn::before {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 12px; height: 12px;
+      border-bottom: 1px solid #b400ff;
+      border-left: 1px solid #b400ff;
+    }
+
+    .proxy-btn:hover {
+      box-shadow: 0 0 18px rgba(0, 200, 83, .25);
+      transform: translateY(-3px);
+    }
+
+    .btn-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .btn-name {
+      font-size: 15px;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+
+    .btn-name::before { content: "[ "; }
+    .btn-name::after  { content: " ]"; }
+
+    .status-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .s-green  { background: #00C853; box-shadow: 0 0 6px rgba(0,200,83,.7); }
+    .s-yellow { background: #FFD600; box-shadow: 0 0 6px rgba(255,214,0,.7); }
+    .s-red    { background: #FF1744; box-shadow: 0 0 6px rgba(255,23,68,.7); }
+
+    .status-label { font-size: 11px; letter-spacing: .12em; }
+    .sl-green  { color: #00C853; }
+    .sl-yellow { color: #FFD600; }
+    .sl-red    { color: #FF1744; }
+
+    .btn-desc {
+      font-size: 11px;
+      color: #8f8f8f;
+      letter-spacing: .08em;
+      line-height: 1.6;
+      border-top: 1px solid #1a1a1a;
+      padding-top: 10px;
+      width: 100%;
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-wrap">
+    <h1>Proxy Portal Active</h1>
+    <p class="subtitle">SELECT TO OPEN &nbsp;|&nbsp; <span>LINK_ONLINE</span></p>
+    <div class="btn-grid" id="btnGrid"></div>
+  </div>
+
+  <script>
+    const links = [
+      {
+        name: "DogeUG",
+        url: "https://storage.googleapis.com/canvas-lms/index.html",
+        status: "green",
+        statusText: "WORKING",
+        desc: "Stable uptime. No lag or broken features (Report If Broken)."
+      },
+      {
+        name: "DayDreamX",
+        url: "https://storage.googleapis.com/daydreaming/dist/index.html",
+        status: "yellow",
+        statusText: "BROKEN",
+        desc: "Loading errors. Service is functional but doesn't load or work properly." 
+      },
+      {
+        name: "NautilusOS",
+        url: "https://unpkg.com/raim-math-work@1.0.18/index.html",
+        status: "yellow",
+        statusText: "BROKEN",
+        desc: "Loading errors. Service is functional but doesn't load or work properly."
+      },
+      {
+        name: "Lucide",
+        url: "https://cdn.jsdelivr.net/gh/lucideproxy/svg@master/logo.svg#/",
+        status: "yellow",
+        statusText: "WORKING",
+        desc: "Stable uptime. No lag or broken features (Report If Broken)."
+      },
+      {
+        name: "Celestial",
+        url: "https://storage.googleapis.com/celestialisbest/index.html#/",
+        status: "yellow",
+        statusText: "BROKEN",
+        desc: "Stable uptime. No lag or broken features (Report If Broken)."
+      },
+      {
+        name: "Infamous",
+        url: "https://liteflux8466.b-cdn.net/",
+        status: "yellow",
+        statusText: "BROKEN",
+        desc: "Stable uptime. No lag or broken features (Report If Broken)."
+      },
+      {
+        name: "Ghost",
+        url: "https://s3.amazonaws.com/ghst/index.html#/",
+        status: "green",
+        statusText: "WORKING",
+        desc: "Stable uptime. No lag or broken features (Report If Broken)."
+      },
+      {
+        name: "PLACEHOLDER",
+        url: "https://placeholder.com",
+        status: "red",
+        statusText: "NONE",
+        desc: "It's Unusable. Note may be down for maintenance or has been blocked."
+      },
+    ];
+
+    const grid = document.getElementById("btnGrid");
+
+    links.forEach((l) => {
+      const btn = document.createElement("button");
+      btn.className = "proxy-btn";
+      btn.innerHTML = `
+        <div class="btn-top">
+          <span class="btn-name">${l.name}</span>
+          <div class="status-wrap">
+            <div class="status-dot s-${l.status}"></div>
+            <span class="status-label sl-${l.status}">${l.statusText}</span>
+          </div>
+        </div>
+        <p class="btn-desc">${l.desc}</p>
+      `;
+      btn.onclick = () => {
+        const win = window.open();
+        const iframe = win.document.createElement("iframe");
+        iframe.style.cssText = "width:100%;height:100%;border:none;";
+        iframe.src = l.url;
+        win.document.body.style.margin = "0";
+        win.document.body.appendChild(iframe);
+      };
+      grid.appendChild(btn);
+    });
+  </script>
+<div align=center>
+<img src='https://www.counter12.com/img-awD089Z40cDc7887-29.gif' border='0' alt='free web counter'></a>
+<script type='text/javascript' src='https://www.counter12.com/ad.js?id=awD089Z40cDc7887'></script>
+</div>
+</body>
+</html>
