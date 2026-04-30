@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>META👾VOID</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style media="screen">
+    :root {
+      --white: #ffffff;
+      --glow-white: 0 0 6px #fff, 0 0 14px rgba(255,255,255,0.5), 0 0 28px rgba(255,255,255,0.2);
+      --glow-white-sm: 0 0 4px #fff, 0 0 8px rgba(255,255,255,0.35);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Scanline overlay */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 3px,
+        rgba(0, 0, 0, 0.18) 3px,
+        rgba(0, 0, 0, 0.18) 4px
+      );
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* Black border vignette */
+    .page-border {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 40;
+      background:
+        linear-gradient(to right,  black 0px, transparent 78px),
+        linear-gradient(to left,   black 0px, transparent 78px),
+        linear-gradient(to bottom, black 0px, transparent 78px),
+        linear-gradient(to top,    black 0px, transparent 78px);
+    }
+
+    /* Corner brackets */
+    .corner {
+      position: fixed;
+      width: 60px;
+      height: 60px;
+      z-index: 45;
+      opacity: 0.75;
+    }
+    .corner::before, .corner::after {
+      content: '';
+      position: absolute;
+      background: var(--white);
+      box-shadow: var(--glow-white);
+    }
+    .corner::before { width: 2px; height: 100%; }
+    .corner::after  { width: 100%; height: 2px; }
+    .corner.tl { top: 18px; left: 18px; }
+    .corner.tr { top: 18px; right: 18px; transform: scaleX(-1); }
+    .corner.bl { bottom: 18px; left: 18px; transform: scaleY(-1); }
+    .corner.br { bottom: 18px; right: 18px; transform: scale(-1); }
+
+    /* HUD top status bar */
+    .hud-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 200px;
+      z-index: 200;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(to bottom, rgba(255,255,255,0.03), transparent);
+    }
+    .hud-bar span {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 18px;
+      color: var(--white);
+      opacity: 0.8;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .hud-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--white);
+      box-shadow: var(--glow-white-sm);
+      animation: blink 2s ease-in-out infinite;
+    }
+
+    /* ── NAV BAR ── */
+    .nav-bar {
+      position: fixed;
+      top: 36px;
+      left: 0; right: 0;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 200;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    /* Decorative tick marks flanking the nav links */
+    .nav-bar::before,
+    .nav-bar::after {
+      content: '';
+      flex: 1;
+      max-width: 160px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.25));
+      margin: 0 20px;
+    }
+    .nav-bar::after {
+      background: linear-gradient(to left, transparent, rgba(255,255,255,0.25));
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* Each nav button */
+    .nav-btn {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.65);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 6px 20px;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+
+    .nav-btn:hover {
+      color: #fff;
+      border-color: rgba(255,255,255,0.55);
+      text-shadow: var(--glow-white-sm);
+    }
+
+    /* Active / current page state */
+    .nav-btn.active {
+      color: #fff;
+      border-color: rgba(255,255,255,0.7);
+      text-shadow: var(--glow-white-sm);
+      background: rgba(255,255,255,0.04);
+    }
+
+    /* Animated underline on active */
+    .nav-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 15%;
+      width: 70%;
+      height: 1px;
+      background: #fff;
+      box-shadow: var(--glow-white-sm);
+    }
+
+    /* Main container — shifted down to clear both bars */
+    .container {
+      position: absolute;
+      top: 38%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: auto;
+      overflow: visible;
+      z-index: 10;
+      text-align: center;
+    }
+
+    /* Title */
+    .test {
+      font-family: 'Orbitron', monospace;
+      text-align: center;
+      color: #fff;
+      font-size: 80px;
+      font-weight: 900;
+      letter-spacing: .10em;
+      text-shadow: var(--glow-white);
+    }
+
+    #type {
+      white-space: nowrap;
+      overflow: hidden;
+      margin: 0 auto;
+      color: #fff;
+      letter-spacing: .15em;
+    }
+
+    /* Divider */
+    .tech-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 18px auto 20px;
+      width: 60%;
+      max-width: 500px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 1.8s forwards;
+    }
+    .tech-divider::before,
+    .tech-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+    }
+    .tech-divider::before { background: linear-gradient(to right, transparent, rgba(255,255,255,0.6)); }
+    .tech-divider::after  { background: linear-gradient(to left,  transparent, rgba(255,255,255,0.6)); }
+    .divider-diamond {
+      width: 8px; height: 8px;
+      border: 1px solid rgba(255,255,255,0.8);
+      transform: rotate(45deg);
+      box-shadow: var(--glow-white-sm);
+    }
+
+    /* Shifting subtext */
+    .shift-text-wrapper {
+      position: relative;
+      height: 38px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn 0.6s ease 2s forwards;
+    }
+
+    .shift-text {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 20px;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: var(--glow-white-sm);
+      position: absolute;
+    }
+
+    @keyframes glitchIn {
+      0%   { opacity: 0; clip-path: inset(40% 0 40% 0); transform: skewX(-8deg) translateX(-6px); }
+      40%  { opacity: 1; clip-path: inset(0% 0 0% 0);   transform: skewX(3deg)  translateX(3px);  }
+      70%  { transform: skewX(-1deg) translateX(-1px); }
+      100% { opacity: 1; clip-path: inset(0% 0 0% 0);   transform: skewX(0)     translateX(0);    }
+    }
+    @keyframes glitchOut {
+      0%   { opacity: 1; clip-path: inset(0% 0 0% 0);   transform: skewX(0); }
+      40%  { opacity: 1; clip-path: inset(20% 0 20% 0); transform: skewX(5deg); }
+      100% { opacity: 0; clip-path: inset(50% 0 50% 0); transform: skewX(-10deg) translateX(8px); }
+    }
+
+    .shift-text.entering { animation: glitchIn  0.45s cubic-bezier(.22,.61,.36,1) forwards; }
+    .shift-text.leaving  { animation: glitchOut 0.35s cubic-bezier(.55,0,1,.45)   forwards; }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* iframe overlay for page switching */
+    .page-frame {
+      position: fixed;
+      top: 84px; left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      height: calc(100vh - 84px);
+      border: none;
+      z-index: 100;
+      display: none;
+      background: #000;
+    }
+    .page-frame.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- Black border -->
+  <div class="page-border"></div>
+
+  <!-- Corners -->
+  <div class="corner tl"></div>
+  <div class="corner tr"></div>
+  <div class="corner bl"></div>
+  <div class="corner br"></div>
+
+  <!-- Status bar -->
+  <div class="hud-bar">
+    <span>Welcome Back</span>
+    <div class="hud-dot"></div>
+    <span id="hud-time">00:00:00</span>
+  </div>
+
+  <!-- ── Navigation bar ── -->
+  <nav class="nav-bar">
+    <div class="nav-links">
+      <button class="nav-btn active" onclick="navigate('home', this)">Home🏡</button>
+      <button class="nav-btn" onclick="navigate('games', this)">Games🕹️</button>
+      <button class="nav-btn" onclick="navigate('p2', this)">Pokemon🐉</button>
+      <button class="nav-btn" onclick="navigate('p3', this)">Proxy🌐</button>
+      <button class="nav-btn" onclick="navigate('p1', this)">About Us📋</button>
+    </div>
+  </nav>
+
+  <!-- iframe for sub-pages (point src at your actual pages) -->
+  <iframe id="page-frame" class="page-frame" src="" title="Content frame"></iframe>
+
+  <!-- Main content (home screen) -->
+  <div class="container" id="home-content">
+    <h1 class="test" id="type"></h1>
+
+    <div class="tech-divider">
+      <div class="divider-diamond"></div>
+    </div>
+
+    <div class="shift-text-wrapper">
+      <div class="shift-text" id="shift-text"></div>
+    </div>
+  </div>
+
+  <!-- Navigation logic -->
+  <script>
+    const pages = {
+      home:  null,
+      games: 'https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/games-v1.html',
+      p1:    'https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/about-us.html',
+      p2:    'https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/pokemon-v1.html',
+      p3:    'https://cdn.jsdelivr.net/gh/ToxicBurstXZ/gs-assets@main/files/prox-v1.html',
+    };
+
+    async function navigate(key, btn) {
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const frame = document.getElementById('page-frame');
+      const homeContent = document.getElementById('home-content');
+
+      if (key === 'home' || !pages[key]) {
+        frame.classList.remove('visible');
+        frame.srcdoc = '';
+        homeContent.style.display = '';
+      } else {
+        homeContent.style.display = 'none';
+        const originalLabel = btn.textContent;
+        btn.textContent = 'LOADING...';
+        try {
+          const res = await fetch(pages[key]);
+          const html = await res.text();
+          frame.srcdoc = html;
+          frame.classList.add('visible');
+        } catch (e) {
+          frame.src = pages[key];
+          frame.classList.add('visible');
+        }
+        btn.textContent = originalLabel;
+      }
+    }
+  </script>
+
+  <!-- Typewriter -->
+  <script>
+    const text = "META👾VOID";
+    let i = 0;
+    const speed = 150;
+    function typeWriter() {
+      if (i < text.length) {
+        document.getElementById("type").innerHTML += text.charAt(i);
+        i++;
+        setTimeout(typeWriter, speed);
+      }
+    }
+    window.onload = typeWriter;
+  </script>
+
+  <!-- Clock -->
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      document.getElementById('hud-time').textContent =
+        `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+
+  <!-- Shifting text -->
+  <script>
+    const phrases = ["META👾LAUNCHER, It's Simpler, Faster, and Better (SAVES GAMES) ", "MADE BY 2 IDIOTS", "Secret TEXT!", "I should be studying my chem quiz...nah im sleep"];
+    let currentIndex = 0;
+
+    function showPhrase(text) {
+      const wrapper = document.querySelector('.shift-text-wrapper');
+      const current = document.getElementById('shift-text');
+      current.className = 'shift-text leaving';
+
+      const next = document.createElement('div');
+      next.className = 'shift-text entering';
+      next.textContent = text;
+      wrapper.appendChild(next);
+
+      setTimeout(() => {
+        current.remove();
+        next.id = 'shift-text';
+        next.className = 'shift-text';
+      }, 500);
+    }
+
+    setTimeout(() => {
+      const el = document.getElementById('shift-text');
+      el.textContent = phrases[0];
+      el.className = 'shift-text entering';
+      setTimeout(() => { el.className = 'shift-text'; }, 450);
+
+      setInterval(() => {
+        let newIndex;
+        do {
+          newIndex = Math.floor(Math.random() * phrases.length);
+        } while (newIndex === currentIndex);
+        currentIndex = newIndex;
+        showPhrase(phrases[currentIndex]);
+      }, 4000);
+    }, 2200);
+  </script>
+
+  <!-- Black hole canvas -->
+  <script>
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    document.body.appendChild(canvas);
+
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100vw';
+    canvas.style.height = '100vh';
+    canvas.style.zIndex = '-1';
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let bhX = canvas.width / 2;
+    let bhY = canvas.height / 2;
+    const bhRadius = 144;
+    const pullStrength = 0.10;
+
+    class Star {
+      constructor() { this.reset(true); }
+      reset(initial = false) {
+        if (initial) {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+        } else {
+          const edge = Math.floor(Math.random() * 4);
+          if (edge === 0) { this.x = Math.random() * canvas.width; this.y = 0; }
+          else if (edge === 1) { this.x = canvas.width; this.y = Math.random() * canvas.height; }
+          else if (edge === 2) { this.x = Math.random() * canvas.width; this.y = canvas.height; }
+          else { this.x = 0; this.y = Math.random() * canvas.height; }
+        }
+        this.size = Math.random() * 2 + 2.5;
+        this.baseSize = this.size;
+        const dx = bhX - this.x;
+        const dy = bhY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const tangentStrength = Math.random() * 1.8 + 1.2;
+        this.vx = (dy / Math.max(dist, 1)) * tangentStrength;
+        this.vy = (-dx / Math.max(dist, 1)) * tangentStrength;
+        this.opacity = Math.random() * 0.5 + 0.5;
+      }
+      update() {
+        const dx = bhX - this.x;
+        const dy = bhY - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const force = pullStrength * (1 + (500 / Math.max(dist, 1)));
+        this.vx += (dx / Math.max(dist, 1)) * force;
+        this.vy += (dy / Math.max(dist, 1)) * force;
+        const spd = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        if (spd > 18) { this.vx = (this.vx / spd) * 18; this.vy = (this.vy / spd) * 18; }
+        this.x += this.vx;
+        this.y += this.vy;
+        const shrinkStart = bhRadius * 4;
+        if (dist < shrinkStart) {
+          const t = 1 - dist / shrinkStart;
+          this.size = this.baseSize * (1 - t * 0.92);
+          this.opacity = 1 - t;
+        }
+        if (dist < bhRadius + 2) this.reset(false);
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.opacity);
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, Math.max(0.1, this.size), 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const stars = [];
+    for (let i = 0; i < 600; i++) stars.push(new Star());
+
+    let glowPulse = 0;
+    function drawBlackHole() {
+      glowPulse += 0.025;
+      const pulse = Math.sin(glowPulse) * 0.15 + 0.85;
+
+      const outerGlow = ctx.createRadialGradient(bhX, bhY, bhRadius * 0.5, bhX, bhY, bhRadius * 6 * pulse);
+      outerGlow.addColorStop(0, 'rgba(120, 0, 200, 0.25)');
+      outerGlow.addColorStop(0.4, 'rgba(80, 0, 160, 0.12)');
+      outerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.beginPath();
+      ctx.arc(bhX, bhY, bhRadius * 6 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = outerGlow;
+      ctx.fill();
+
+      const innerGlow = ctx.createRadialGradient(bhX, bhY, bhRadius * 0.8, bhX, bhY, bhRadius * 2.8 * pulse);
+      innerGlow.addColorStop(0, 'rgba(180, 0, 255, 0.85)');
+      innerGlow.addColorStop(0.35, 'rgba(130, 0, 220, 0.45)');
+      innerGlow.addColorStop(0.7, 'rgba(80, 0, 160, 0.15)');
+      innerGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.beginPath();
+      ctx.arc(bhX, bhY, bhRadius * 2.8 * pulse, 0, Math.PI * 2);
+      ctx.fillStyle = innerGlow;
+      ctx.fill();
+
+      const holeGrad = ctx.createRadialGradient(bhX, bhY, 0, bhX, bhY, bhRadius);
+      holeGrad.addColorStop(0, 'rgba(0,0,0,1)');
+      holeGrad.addColorStop(0.75, 'rgba(0,0,0,1)');
+      holeGrad.addColorStop(1, 'rgba(20,0,40,0.9)');
+      ctx.beginPath();
+      ctx.arc(bhX, bhY, bhRadius, 0, Math.PI * 2);
+      ctx.fillStyle = holeGrad;
+      ctx.fill();
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBlackHole();
+      stars.forEach(s => { s.update(); s.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      bhX = canvas.width / 2;
+      bhY = canvas.height / 2;
+    });
+  </script>
+<script>
+  alert("Close the last page so that this site doesn't get Blocked.              ENJOY META👾VOID :)");
+</script>
+</body>
+</html>
